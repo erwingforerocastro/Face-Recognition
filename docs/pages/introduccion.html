@@ -1,0 +1,63 @@
+<h5>Introducción</h5>
+<p>MvFy - HSV es un sistema de reconocimiento facial que integra <a target="_blank" href="https://github.com/justadudewhohacks/face-api.js/">Face-api.js</a>, como sistema principal en la detecciónn y el reconocimiento de rostros, este modulo tiene el objetivo
+    de proporcionar herramientas sencillas de integracion en un sistema cerrado de camaras.
+</p>
+<h5>Inicio rapido</h5>
+<p>
+    Para empezar a usar el proyecto se recomienda ir al repositorio de
+    <a href="https://github.com/erwingforerocastro/Face-Recognition" target="_blank ">Face-recognition</a> , y clonar dicho repositorio.
+    <br>
+    <div class="card">
+        <div class="card-body">
+            <code>git clone git@github.com:erwingforerocastro/Face-Recognition.git</code>
+        </div>
+    </div>
+    <br>
+    <li>Para integrar con el proyecto javascript se debe hacer uso de la importacion modular de la clase principal</li>
+    <div class="card">
+        <div class="card-body">
+            <code>import { MvfyHsv } from 'ruta-relativa/mvfy-hsv'</code>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <code>const MvFyHsv = require('ruta-relativa/mvfy-hsv')</code>
+        </div>
+    </div>
+    Donde <text class="danger">ruta-relativa</text> es dicha ruta donde esta posicionado el archivodel proyecto
+    <a href="https://nodejs.org/en/" target="_blank" rel="noopener noreferrer">Node.js</a>
+    <br><br>
+    <li>para iniciar el sistema, se debe pasar los siguientes parametros, los cuales permitiran comenzar la detección de los usuarios en un sistema cerrado por medio de un video RGB</li>
+    <br>
+    <div class="row">
+        <div class="col-3">
+            <div class="btn-group">
+                <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Parametros
+                </button>
+
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="#">name</a>
+                    <a class="dropdown-item" href="#">name_file</a>
+                    <a class="dropdown-item" href="#">video_input</a>
+                    <a class="dropdown-item" href="#">min_date_knowledge</a>
+                    <a class="dropdown-item" href="#">file_extension</a>
+                    <a class="dropdown-item" href="#">features</a>
+                    <a class="dropdown-item" href="#">type_system</a>
+                </div>
+            </div>
+        </div>
+        <div class="card col-9">
+            <div class=" card-body ">
+                <code>
+                    const MODEL = MvfyHsv({
+                    video_label: 'video_demo',
+                    min_date_knowledge: '1 day',
+                    file_extension: 'xlsx',
+                    features: 'all',
+                    type_system: 'optimized'});
+            </code>
+            </div>
+        </div>
+    </div>
+</p>

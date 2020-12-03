@@ -12,7 +12,7 @@ import fs from 'fs'
 import face_api from './face-api'
 import path from 'path'
 
-const ALLOWED_EXTENSIONS = ['json', 'csv', 'xlsx'];
+const ALLOWED_EXTENSIONS = ['json', 'csv', 'xls'];
 const ALLOWED_FEATURES = ['all', 'landmarks', 'ageandgender', 'expressions', 'none'];
 const MIN_DATE_KNOWLEDGE = ['1', 'week'];
 const TYPE_SYSTEM = ['optimized', 'precise'];
@@ -73,21 +73,17 @@ const loadExternalModels = async(features, type_system) => {
 }
 
 /**
- * Detectar los rostros y etiquetarlos
- * @param {Boolean} state estado del sistema (nuevo:true o antiguo:false)
- * @param {String} folder_name carpeta donde se guardan las configuraciones
- * @param {MvfyHsv} system intancia de la clase princial
+ * Iniciar las configuraciones iniciales del sistema
+ * @param {MvfyHsv} actualSystem intancia de la clase principal 
  * @return {FaceMatcher}
  *  
  */
-
-const preloadSystem = async(actualInstance, folder_name = 'architecture_system') => {
+const preloadSystem = async(actualSystem, folder_name = 'system') => {
     let actualPath = path.join(__dirname, `${folder_name}`);
-    let actualFile = path.join(actualPath, `${system.name_system}.${system.extension}`);
-    let configFile = path.join(actualPath, `config.json`);
+    let actualFile = path.join(actualPath, `${actualSystem.name_file}.${actualSystem.extension}`);
 
     // validamos la carpeta del sistema
-    if (!fs.existsSync(actualPath) || state) {
+    if (!fs.existsSync(actualPath)) {
 
         fs.mkdirSync(actualPath, (err) => {
             if (err) {
@@ -97,7 +93,7 @@ const preloadSystem = async(actualInstance, folder_name = 'architecture_system')
     }
 
     // validamos que el archivo exista
-    if (!fs.existsSync(actualFile) || state) {
+    if (!fs.existsSync(actualFile)) {
 
         fs.writeFileSync(actualFile, (err) => {
             if (err) {
@@ -106,29 +102,7 @@ const preloadSystem = async(actualInstance, folder_name = 'architecture_system')
         })
     }
 
-    // validamos que el archivo exista
-    if (!fs.existsSync(configFile) || state) {
-
-        fs.writeFileSync(configFile, (err) => {
-            if (err) {
-                throw new Error(`Error ${err}`);
-            }
-        })
-    }
-
-    let initialSystem = async() => {
-
-    }
-
-    fs.writeFile(`${system.name_system}.${system.extension}`, data, (err) => {
-        if (err) {
-            throw new Error(`Error ${err}`);
-        } else {
-
-        }
-    });
-
-
+    await loadExternalModels(actualSystem.features, actualSystem.type_system)
 
 }
 
@@ -237,7 +211,7 @@ const validateInstance = (args = {}) => {
             if (typeof(file_extension) === 'string' && ALLOWED_EXTENSIONS.includes(file_extension)) {
                 return [true, file_extension];
             }
-            isRequired('file_extension [String], permissible [json, xlsx, csv]');
+            isRequired('file_extension [String], permissible [json, xls, csv]');
             return [false];
 
         },
@@ -293,7 +267,7 @@ export class MvfyHsv {
                 [3]: this.min_date_knowledge = MIN_DATE_KNOWLEDGE,
                 [4]: this.file_extension = ALLOWED_EXTENSIONS[0],
                 [5]: this.features = ALLOWED_FEATURES[0],
-                [6]: this.time_system = TYPE_SYSTEM[0]
+                [6]: this.type_system = TYPE_SYSTEM[0]
             } = value_args);
 
             this.#execution = false;
@@ -318,19 +292,23 @@ export class MvfyHsv {
     }
 
     load(args = {}) {
-        if (!this.#system) {
+        if (!this.#execution) {
             preloadSystem({ state } = args, this);
+        } else {
+            throw new Error('the system is on');
         }
-        throw new Error('the system must be off');
+
     }
 
     async get_detections(args = {}) {
 
         if (this.#execution) {
 
+        } else {
+            throw new Error('the system is off');
         }
 
-        throw new Error('the system is off');
+
     }
 
     async run() {
