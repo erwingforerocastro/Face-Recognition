@@ -8,9 +8,7 @@ const _ = undefined;
  */
 const getEstructure = async() => {
 
-    let response = await $.getJSON(`
-$ { URL }
-docs / scripts / estructure.json `);
+    let response = await $.getJSON(`${URL}docs/scripts/estructure.json `);
     return response;
 }
 
@@ -25,8 +23,7 @@ const estructureSystem = async(parentDivNav, parentDivContent) => {
 
     for (let clave in ESTRUCTURE) {
         if (ESTRUCTURE.hasOwnProperty(clave)) {
-            htmlNav = `
-$ { htmlNav } < p class = "nav-tabs text-light nav-item" > $ { clave } < /p>`;
+            htmlNav = `${ htmlNav } < p class = "nav-tabs text-light nav-item" > ${ clave } < /p>`;
 
             for (let subClave in ESTRUCTURE[clave]) {
                 if (ESTRUCTURE[clave].hasOwnProperty(subClave)) {
