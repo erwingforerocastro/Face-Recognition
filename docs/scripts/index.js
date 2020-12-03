@@ -1,5 +1,6 @@
-const URL = 'http://127.0.0.1:5500/' // Local
-const htmlContent = $.get(`${URL}docs/pages/introduccion.html`);
+const LOCAL = 0;
+const URL = (LOCAL == 1) ? 'http://127.0.0.1:5500/docs/' : '';
+const htmlContent = $.get(`${URL}pages/introduccion.html`);
 const _ = undefined;
 
 /**
@@ -8,7 +9,7 @@ const _ = undefined;
  */
 const getEstructure = async() => {
 
-    let response = await $.getJSON(`${URL}docs/scripts/estructure.json`);
+    let response = await $.getJSON(`${URL}scripts/estructure.json`);
     return response;
 }
 
@@ -64,14 +65,14 @@ const selectOption = async(key, option, all = false) => {
         for (let clave in ESTRUCTURE) {
 
             if (ESTRUCTURE[clave].hasOwnProperty(option)) {
-                let html = $.get(`${URL}docs/pages/${ESTRUCTURE[clave][option]}.html`);
+                let html = $.get(`${URL}pages/${ESTRUCTURE[clave][option]}.html`);
 
                 $("#principalContainer").html(html.responseText);
             }
         }
     } else {
 
-        let html = $.get(`${URL}docs/pages/${ESTRUCTURE[key][option]}.html`);
+        let html = $.get(`${URL}pages/${ESTRUCTURE[key][option]}.html`);
         $("#principalContainer").html(html.responseText);
     }
 
@@ -94,6 +95,13 @@ $(document).ready(() => {
 
     //Estructura html 
     estructureSystem("#estructureSystemNav", "#principalContainer");
+
+    if (LOCAL == 1) {
+        $('video').each((idx, value) => {
+            let srcValue = $(this).attr('src');
+            $(this).attr('src', `${URL}/docs/${srcValue}`)
+        })
+    }
 
 
     // MODEL = MvfyHsv({
