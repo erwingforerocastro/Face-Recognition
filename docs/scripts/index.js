@@ -1,4 +1,4 @@
-const URL = `${window.location.host}/` || 'http://127.0.0.1:5500/'; // Local
+const URL = 'http://127.0.0.1:5500/'; // Local
 const htmlContent = $.get(`${URL}docs/pages/introduccion.html `);
 const _ = undefined;
 
