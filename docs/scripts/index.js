@@ -1,4 +1,4 @@
-const LOCAL = 0;
+const LOCAL = 1;
 const URL = (LOCAL == 1) ? 'http://127.0.0.1:5500/docs/' : '';
 const htmlContent = $.get(`${URL}pages/introduccion.html`);
 const _ = undefined;
@@ -60,23 +60,25 @@ const estructureSystem = async(parentDivNav, parentDivContent) => {
  */
 const selectOption = async(key, option, all = false) => {
     let ESTRUCTURE = await getEstructure();
-    console.log(option)
+
     if (all) {
         for (let clave in ESTRUCTURE) {
 
             if (ESTRUCTURE[clave].hasOwnProperty(option)) {
-                let html = $.get(`${URL}pages/${ESTRUCTURE[clave][option]}.html`);
+                let html = await $.get(`${URL}pages/${ESTRUCTURE[clave][option]}.html`);
 
-                $("#principalContainer").html(html.responseText);
+                $("#principalContainer").html(html);
             }
         }
     } else {
 
         let html = $.get(`${URL}pages/${ESTRUCTURE[key][option]}.html`);
-        $("#principalContainer").html(html.responseText);
+        $("#principalContainer").html(html);
+
     }
 
 }
+
 
 const searchContent = (value) => {
 
@@ -115,11 +117,19 @@ $(document).ready(() => {
 
 });
 
-$("#estructureSystemNav").on('click', 'li', () => {
+$("#estructureSystemNav").on('click', 'li a', async(event) => {
 
-    let optionSelect = $(this).text();
-    console.log(optionSelect)
-    selectOption(_, optionSelect, true);
+    let optionSelect = event.target.textContent;
+    $("#estructureSystemNav li a").each((idx, el) => {
+        if ($(el).text() == optionSelect) {
+            $(el).attr({ 'active': true });
+        } else {
+            $(el).attr({ 'active': false });
+        }
+    });
+
+    await selectOption(_, optionSelect, true);
+
 })
 
 // /**
