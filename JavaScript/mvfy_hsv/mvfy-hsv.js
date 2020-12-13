@@ -180,7 +180,7 @@ const validateInstance = (args = {}) => {
             }
 
             isRequired('file_name [String]');
-            return [true, 'hsv_architecture']
+            return [true, 'hsv_register']
         },
         validate_video_input: (video_input) => {
             if (video_input.toString() === '[object]') {
