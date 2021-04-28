@@ -102,6 +102,19 @@ const preloadSystem = async(actualSystem, folder_name = 'system') => {
         })
     }
 
+    let data = JSON.stringify(student);
+    fs.writeFileSync('student-2.json', data);
+
+    //validamos el archivo de rostros
+    if (!fs.existsSync(matchFile)) {
+
+        fs.writeFileSync(matchFile, (err) => {
+            if (err) {
+                throw new Error(`Error ${err}`);
+            }
+        })
+    }
+
     await loadExternalModels(actualSystem.features, actualSystem.type_system)
 
 }
