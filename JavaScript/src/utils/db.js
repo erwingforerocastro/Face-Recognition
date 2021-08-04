@@ -4,8 +4,9 @@
 const MongoClient = require('mongodb').MongoClient
 const env = require('../config/db.config')
 
-// const mongoUrl = `mongodb://${env.MONGO_HOSTNAME}:${env.MONGO_PORT}/${env.MONGO_DB}`;
-const mongoUrl = `mongodb+srv://${env.MONGO_USERNAME}:${env.MONGO_PASSWORD}@${env.MONGO_HOSTNAME}/${env.MONGO_DB}?retryWrites=true&w=majority`
+const mongoUrl = `mongodb://${env.MONGO_HOSTNAME}:${env.MONGO_PORT}/${env.MONGO_DB}`;
+//const mongoUrl = `mongodb://${env.MONGO_USERNAME}:${env.MONGO_PASSWORD}@${env.MONGO_HOSTNAME}:${env.MONGO_PORT}/${env.MONGO_DB}`;
+console.log(mongoUrl)
 let db = null
 
 const _connect = async() => {

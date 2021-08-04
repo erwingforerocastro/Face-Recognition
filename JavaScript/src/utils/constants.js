@@ -1,10 +1,16 @@
-import path from 'path';
+const path = require('path');
 
 
-export const UNKNOWS_URL = path.join(__dirname, '/../unknows_url');
-export const ACQUAINTANCES_URL = path.join(__dirname, '/../acquaintances_url');
-export const MODELS_URL = path.join(__dirname, '/../models');
-export const CONFIG_URL = path.join(__dirname, '/../config');
-export const MATCH_FILE = path.join(CONFIG_URL, `match_faces.json`);
-export const CONFIG_FILE = path.join(CONFIG_URL, 'config.json');
-export const PORT = process.env.PORT || 3000;
+const UNKNOWS_URL = path.join(__dirname, '/../unknows_url');
+const ACQUAINTANCES_URL = path.join(__dirname, '/../acquaintances_url');
+const MODELS_URL = path.join(__dirname, '/mvfy/models');
+const CONFIG_URL = path.join(__dirname, '/../config');
+const PORT = process.env.PORT || 3000;
+
+module.exports = {
+    UNKNOWS_URL,
+    ACQUAINTANCES_URL,
+    MODELS_URL,
+    CONFIG_URL,
+    PORT
+}
