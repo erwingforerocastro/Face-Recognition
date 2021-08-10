@@ -11,6 +11,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="mvfy/socket.io.min.js"></script>
     <script src="mvfy/face-api.js"></script>
+    <script src="mvfy/mvfy-hsv.js"></script>
     </script>
     <style>
         body {
@@ -40,6 +41,24 @@
 
     <h2 id="statusOfSystem"></h2>
 </body>
-<script src="./mvfy/demo.js"></script>
+<script language="javascript">
+    const streamVideo = document.getElementById('video-demo')
+    const MODEL_FEATURES = {
+        min_date_knowledge: '1 day',
+        features: 'all',
+        type_system: 'optimized',
+        max_descriptor_distance: 0.7,
+        url_ws_service: 'ws://localhost:3000'
+    }
+    $(document).ready(async() => {
+
+        const hsv = new MvfyHsv({
+            streamVideo: streamVideo,
+            ...MODEL_FEATURES,
+        });
+        hsv.start();
+
+    });
+</script>
 
 </html>
