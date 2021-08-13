@@ -707,7 +707,7 @@
              */
             async loadModels() {
 
-                let url = '../models';
+                let url = `../${MODELS_URL}`;
 
                 try {
 
