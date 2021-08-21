@@ -80,7 +80,7 @@
     }
 
     /**
-     * Function get 
+     * Function get utils functions
      */
     function getUtils() {
         let utils_global = {
@@ -169,22 +169,100 @@
 
         const fs = require('fs');
         const face_api = require('./face-api');
-        const mongo = require('../controllers/mongo.controller.js');
         const mongodb = require('mongodb');
         const path = require('path');
         const stringify = require('fast-json-stable-stringify');
         const { StringDecoder } = require('string_decoder');
         const SocketIO = require("socket.io");
         const moment = require('moment');
-
+        moment.locale('es');
         const MODELS_URL = path.join(__dirname, '/mvfy/models');
         const CONFIG_URL = path.join(__dirname, '/../config');
 
+        /**
+         * Get functions to manage mongodb conection
+         */
+        async function utils_mongodb() {
+
+            let MongoClient = require('mongodb').MongoClient
+
+            // let mongoUrl = `mongodb://${MONGO_CONFIG.MONGO_HOSTNAME}:${MONGO_CONFIG.MONGO_PORT}/${MONGO_CONFIG.MONGO_DB}`;
+            let mongoUrl = `mongodb://${MONGO_CONFIG.MONGO_USERNAME}:${MONGO_CONFIG.MONGO_PASSWORD}@${MONGO_CONFIG.MONGO_HOSTNAME}:${MONGO_CONFIG.MONGO_PORT}/${MONGO_CONFIG.MONGO_DB}`;
+            console.log(mongoUrl);
+            let db = null
+
+            /**
+             * connect bd
+             * @returns {MongoClient.db}
+             */
+            let _connect = async() => {
+                try {
+                    let url = mongoUrl
+                    let _db = await MongoClient.connect(url, { useUnifiedTopology: true, useNewUrlParser: true, poolSize: 10 })
+                    db = _db
+                    return _db.db()
+                } catch (e) {
+                    return e
+                }
+            }
+
+            /**
+             * Get actual connection
+             * @returns {MongoClient.db}
+             */
+            let getConnection = async() => {
+                try {
+                    if (db == null) {
+                        db = await _connect()
+                        console.log('Connected', db)
+                    }
+                    return db
+                } catch (e) {
+                    return e
+                }
+            }
+
+            return {
+                /** Insert register to bd*/
+                insert: async(collection /**{String} */ , query /**{Object} */ ) => {
+                    const connection = await getConnection()
+                    return await connection.collection(collection).insertOne(query).catch(err => {
+                        if (err) throw err
+                    })
+                },
+                /** Upadate register to bd*/
+                update: async(collection /**{String} */ , query /**{Object} */ , newvalues /**{Object} */ ) => {
+                    const connection = await getConnection()
+                    return await connection.collection(collection).update(query, newvalues).catch(err => {
+                        if (err) throw err
+                    })
+                },
+                /** Find registers to bd*/
+                find: async(collection /**{String} */ , query = {}, parameters = {}) => {
+                    const connection = await getConnection()
+                    return await connection.collection(collection).find(query, parameters).toArray(function(err, result) {
+                        if (err) throw err;
+                        return result;
+                    });
+                },
+                /** Find one register to bd*/
+                findOne: async(collection /**{String} */ , query = {}, parameters = {}) => {
+                    const connection = await getConnection()
+                    return new Promise((resolve) => {
+                        connection.collection(collection).findOne(query, parameters, (err, result) => {
+                            if (err) throw err;
+                            resolve(result);
+                        });
+                    })
+                }
+            }
+
+        }
 
         return {
             fs: fs,
             face_api: face_api,
-            mongo: mongo,
+            mongo: await utils_mongodb(),
             mongodb: mongodb,
             path: path,
             stringify: stringify,
@@ -223,6 +301,13 @@
     const TYPE_SYSTE = ['optimized', 'precise'];
     const KEY_ARGUMENT = ['min_date_knowledge', 'file_extension', 'features', 'type_system'];
     const VALID_TYPE_DAT = ["day", "week", "month", "year"];
+    const MONGO_CONFIG = {
+        MONGO_USERNAME: '',
+        MONGO_PASSWORD: '',
+        MONGO_HOSTNAME: 'localhost',
+        MONGO_PORT: '27017',
+        MONGO_DB: 'mvfy_hsv',
+    }
     const ACTION = {
         INIT_SYSTEM: "INIT_SYSTEM",
         SET_DETECTION: "SET_DETECTION",
@@ -243,11 +328,9 @@
 
         class MvfyHsv {
 
-            // "use strict";
-
             /**
              * Constructor principal del modelo
-             * @param {String} name nombre personalizado del sistema
+             * @params {String} name nombre personalizado del sistema
              * @param {String} name_file nombre del archivo donde se guardaran las detecciones
              */
             constructor(args = {}) {
@@ -281,7 +364,7 @@
             }
 
             /**
-             * Validaciones
+             * Validations of instance
              * @param {String} type el tipo de dato necesario o argumento requerido
              * @return {Error} mensaje de error indicando el tipo erroneo o falta de variable
              *  
@@ -412,7 +495,7 @@
             }
 
             /**
-             * Cargar los modelos e iniciar video
+             * Load models and initialize video
              * @param {String} features variable con la caracteristica adicional a la predicción
              * @param {String} type_system tipo de sistema optimo o preciso
              */
@@ -451,7 +534,6 @@
 
             /**
              * Detect faces and tag them
-             * 
              * @param {String} route ruta de guardado de las imagenes
              * @param {Array} labels nombre u etiqueta de las imagenes de los usuarios
              * @return {FaceMatcher}
@@ -532,19 +614,29 @@
                     }))
                 }
             }
+
+            /**
+             * Evaluate detection of face user
+             * @param {Object} user 
+             */
             async evaluate_detection(user) {
-                let detection = this.bd.update(collections.USERS, {
-                    _id: new ObjectId(exist_user._id)
+                let detection = this.bd.update(collection.USERS, {
+                    _id: new ObjectId(user._id)
                 }, {
-                    history: enviroment.convertString2Int(exist_user.history) + 1
+                    history: enviroment.convertString2Int(user.history) + 1
                 })
                 console.log("detection insert", detection)
             }
+
+            /**
+             * Evaluate new detection
+             * @param {Object} data 
+             */
             async setDetection(data) {
                 let ObjectId = enviroment.mongodb.ObjectId
                 try {
                     if (data.id != null && data.label != null) {
-                        let exist_user = await this.bd.findOne(collections.USERS, {
+                        let exist_user = await this.bd.findOne(collection.USERS, {
                             label: data.label,
                             system_id: data.id
                         })
@@ -573,13 +665,26 @@
                 }
             }
 
+            /**
+             * websocket - connection
+             */
             connect() {
                 this.io.on('connection', (ws) => this.ws(ws))
             }
+
+            /**
+             * Websocket - initizalize receiver 
+             * @param {SocketIO} socket 
+             */
             ws(socket) {
                 console.log("websocket connect")
                 socket.on("message", (json) => this.receiver(json))
             }
+
+            /**
+             * Websocket - manage receiver
+             * @param {String} json 
+             */
             receiver(json) {
                 let data = JSON.parse(json)
                 switch (data.action) {

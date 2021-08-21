@@ -4,20 +4,40 @@
         (global = global || self, factory(global.MvfyHsv = global.MvfyHsv || {}));
 }(this, (function(exports) {
 
-    'use strict';
-
     /**  
      * @license
      * MvFy HSV: Modulo de seguridad visual
-     *
      * Copyright©Erwing Fc ~ erwingforerocastro@gmail.com All Rights Reserved.
-     *
-     *
      * Date: 2020-09-04
+     * 
+     * Copyright 2020 Google LLC. All Rights Reserved.
+     * Licensed under the Apache License, Version 2.0 (the "License");
+     * you may not use this file except in compliance with the License.
+     * You may obtain a copy of the License at
+     *
+     * http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     * =============================================================================
      */
 
+    'use strict';
+
+    /**
+     * @constant
+     * @type {Object}
+     */
     var environment;
 
+    // <----------------------------- FUNCTIONS OF ENVIROMENT ----------------------------->
+
+    /**
+     * Function for validate if enviroment is browser
+     */
     function isBrowser() {
         return typeof window === 'object' &&
             typeof document !== 'undefined' &&
@@ -28,6 +48,9 @@
             typeof CanvasRenderingContext2D !== 'undefined';
     }
 
+    /**
+     * Function for validate if enviroment is nodejs
+     */
     function isNodejs() {
         return typeof global === 'object' &&
             typeof require === 'function' &&
@@ -38,6 +61,9 @@
             typeof process !== 'undefined' && !!process.version;
     }
 
+    /**
+     * Function get actual enviroment
+     */
     function getEnv() {
         if (!environment) {
             throw new Error('getEnv - environment is not defined, check isNodejs() and isBrowser()');
@@ -45,19 +71,28 @@
         return environment;
     }
 
+    /**
+     * Function set properties of enviroment
+     * @param {Object<any>} env 
+     */
     function setEnv(env) {
         environment = env;
     }
 
-    function initialize() {
-        const utils = {
+    /**
+     * Function get 
+     */
+    function getUtils() {
+        let utils_global = {
+
+            /**
+             * Function convert <String> to <Int>
+             * @param {String} string 
+             * @returns {Number} 
+             */
             convertString2Int: (string) => {
                 let sub_string = string.match(/\d+/gi)
                 return (sub_string) ? parseInt(sub_string.join("")) : 0
-            },
-
-            getActualDate: (format = 'day') => {
-
             },
 
             extractValidDate: (_date) => {
@@ -67,12 +102,55 @@
             },
         }
 
+        let utils_browser = {
+
+        }
+
+        let utils_node = {
+            validateTypes: (_type, _valid_types) => {
+
+            },
+
+            /**
+             * Function for obtain actual date
+             * @param {String} _format - valid format see https://momentjs.com/docs/#/parsing/string-format/
+             * @return {String}
+             */
+            getActualDate: (_format = DATE_FORMAT) => {
+                return environment.moment().format(format)
+            },
+            /**
+             * Function for get diference between a date and now
+             * @param {String} _date - date
+             * @param {String} _type - valid type see {link}
+             * @return {Number} 
+             */
+            getDateDiffSoFar: (_date, _type) => {
+                let date = environment.moment(_date)
+                let date_now = this.getActualDate()
+                if (date) {
+                    return
+                } else {
+                    throw new TypeError(`getDateDiffSoFar - Invalid date ${_date}`)
+                }
+            }
+        }
+
+        utils_browser = {...utils_global, ...utils_browser }
+        utils_node = {...utils_global, ...utils_node }
+
+        setEnv({
+            utils: (enviroment.type === 'browser') ? utils_browser : utils_node,
+            ...environment
+        })
+    }
+
+    function initialize() {
         // check for isBrowser() first to prevent electron renderer process
         // to be initialized with wrong environment due to isNodejs() returning true
         if (isBrowser()) {
             setEnv({
                 type: "browser",
-                utils: utils,
                 ...createBrowserEnv()
             });
         }
@@ -83,6 +161,8 @@
                 ...createNodejsEnv()
             });
         }
+
+        getUtils()
     }
 
     function createNodejsEnv() {
@@ -132,8 +212,11 @@
 
     initialize()
 
+    // <----------------------------- CONSTANTS ----------------------------->
+
     const MODELS_URL = environment.MODELS_URL;
     const CONFIG_URL = environment.CONFIG_URL;
+    const DATE_FORMAT = "DD/MM/YYYY"
     const PORT = process.env.PORT || 3000;
     const ALLOWED_FEATURE = ['all', 'ageandgender', 'expressions', 'none'];
     const MIN_DATE_KNOWLEDG = ['1', 'week'];
@@ -154,6 +237,7 @@
         USERS: "users"
     };
 
+    // <----------------------------- VALIDATE ENVIROMENT ----------------------------->
 
     if (environment.type === "node") {
         class MvfyHsv {
