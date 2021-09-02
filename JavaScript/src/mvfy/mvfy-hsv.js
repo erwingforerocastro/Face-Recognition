@@ -3,7 +3,6 @@
         typeof define === 'function' && define.amd ? define(['exports'], factory) :
         (global = global || self, factory(global.MvfyHsv = global.MvfyHsv || {}));
 }(this, (function(exports) {
-
     /**  
      * @license
      * MvFy HSV: Modulo de seguridad visual
@@ -122,14 +121,14 @@
             /**
              * Function for get diference between a date and now
              * @param {String} _date - date
-             * @param {String} _type - valid type see {link}
+             * @param {String} _type default {days} - valid type see {link}
              * @return {Number} 
              */
-            getDateDiffSoFar: (_date, _type) => {
+            getDateDiffSoFar: (_date, _type = "days") => {
                 let date = environment.moment(_date)
                 let date_now = this.getActualDate()
                 if (date) {
-                    return
+                    return date.diff(date_now, _type)
                 } else {
                     throw new TypeError(`getDateDiffSoFar - Invalid date ${_date}`)
                 }
@@ -140,7 +139,7 @@
         utils_node = {...utils_global, ...utils_node }
 
         setEnv({
-            utils: (enviroment.type === 'browser') ? utils_browser : utils_node,
+            utils: (environment.type === 'browser') ? utils_browser : utils_node,
             ...environment
         })
     }
@@ -155,34 +154,25 @@
             });
         }
         if (isNodejs()) {
+            let nodejsenv = createNodejsEnv()
             setEnv({
                 type: "node",
-                utils: utils,
-                ...createNodejsEnv()
+                ...nodejsenv
             });
         }
 
         getUtils()
     }
 
-    function createNodejsEnv() {
-
-        const fs = require('fs');
-        const face_api = require('./face-api');
+    /**
+     * get mongodb utils
+     */
+    async function get_mongodb() {
         const mongodb = require('mongodb');
-        const path = require('path');
-        const stringify = require('fast-json-stable-stringify');
-        const { StringDecoder } = require('string_decoder');
-        const SocketIO = require("socket.io");
-        const moment = require('moment');
-        moment.locale('es');
-        const MODELS_URL = path.join(__dirname, '/mvfy/models');
-        const CONFIG_URL = path.join(__dirname, '/../config');
-
         /**
          * Get functions to manage mongodb conection
          */
-        async function utils_mongodb() {
+        let utils_mongo = async() => {
 
             let MongoClient = require('mongodb').MongoClient
 
@@ -257,20 +247,39 @@
                 }
             }
 
-        }
+        };
+        let mongo = await utils_mongo();
+
+        setEnv({
+            ...environment,
+            mongo: mongo,
+            mongodb: mongodb,
+        })
+    }
+
+    function createNodejsEnv() {
+
+        const fs = require('fs');
+        const face_api = require('./face-api');
+        const path = require('path');
+        const stringify = require('fast-json-stable-stringify');
+        const { StringDecoder } = require('string_decoder');
+        const SocketIO = require("socket.io");
+        const moment = require('moment');
+        moment.locale('es');
+        const MODELS_URL = path.join(__dirname, '/mvfy/models');
+        const CONFIG_URL = path.join(__dirname, '/../config');
+
+
 
         return {
             fs: fs,
             face_api: face_api,
-            mongo: await utils_mongodb(),
-            mongodb: mongodb,
             path: path,
             stringify: stringify,
             StringDecoder: StringDecoder,
             SocketIO: SocketIO,
             moment: moment,
-            UNKNOWS_URL: UNKNOWS_URL,
-            ACQUAINTANCES_URL: ACQUAINTANCES_URL,
             MODELS_URL: MODELS_URL,
             CONFIG_URL: CONFIG_URL
         }
@@ -296,11 +305,11 @@
     const CONFIG_URL = environment.CONFIG_URL;
     const DATE_FORMAT = "DD/MM/YYYY"
     const PORT = process.env.PORT || 3000;
-    const ALLOWED_FEATURE = ['all', 'ageandgender', 'expressions', 'none'];
-    const MIN_DATE_KNOWLEDG = ['1', 'week'];
-    const TYPE_SYSTE = ['optimized', 'precise'];
+    const ALLOWED_FEATURES = ['all', 'ageandgender', 'expressions', 'none'];
+    const MIN_DATE_KNOWLEDGE = ['1', 'week'];
+    const TYPE_SYSTEM = ['optimized', 'precise'];
     const KEY_ARGUMENT = ['min_date_knowledge', 'file_extension', 'features', 'type_system'];
-    const VALID_TYPE_DAT = ["day", "week", "month", "year"];
+    const VALID_TYPE_DATE = ["day", "week", "month", "year"];
     const MONGO_CONFIG = {
         MONGO_USERNAME: '',
         MONGO_PASSWORD: '',
@@ -335,6 +344,10 @@
              */
             constructor(args = {}) {
 
+                (async() => {
+                    await get_mongodb();
+                })();
+
                 let { server, options } = args
 
                 this.min_date_knowledge = MIN_DATE_KNOWLEDGE
@@ -345,6 +358,7 @@
                 this.max_descriptor_distance = 0.7
                 this.bd = environment.mongo;
                 this.execution = false;
+                console.log(environment)
                 this.io = environment.SocketIO(server, options)
 
             }
@@ -701,6 +715,7 @@
         }
 
         exports.MvfyHsv = MvfyHsv
+        Object.defineProperty(exports, '__esModule', { value: true });
 
     } else if (environment.type === "browser") {
         $.getScript('mvfy/socket.io.min.js')

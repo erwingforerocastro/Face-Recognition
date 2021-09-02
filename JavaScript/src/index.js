@@ -5,7 +5,6 @@
 // require('@tensorflow/tfjs - node');
 const express = require('express');
 const { MvfyHsv } = require('./mvfy/mvfy-hsv');
-const config = require("./config/db.config");
 const { PORT } = require('./utils/constants');
 const app = express();
 const server = require('http').Server(app);
@@ -17,6 +16,7 @@ options = {
         methods: ["GET", "POST"]
     }
 }
+console.log(MvfyHsv)
 const hsv = new MvfyHsv({ server: server, options: options });
 hsv.connect()
 
