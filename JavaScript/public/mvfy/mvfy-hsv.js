@@ -3,7 +3,6 @@
         typeof define === 'function' && define.amd ? define(['exports'], factory) :
         (global = global || self, factory(global.MvfyHsv = global.MvfyHsv || {}));
 }(this, (function(exports) {
-
     /**  
      * @license
      * MvFy HSV: Modulo de seguridad visual
@@ -140,7 +139,7 @@
         utils_node = {...utils_global, ...utils_node }
 
         setEnv({
-            utils: (enviroment.type === 'browser') ? utils_browser : utils_node,
+            utils: (environment.type === 'browser') ? utils_browser : utils_node,
             ...environment
         })
     }
@@ -155,34 +154,25 @@
             });
         }
         if (isNodejs()) {
+            let nodejsenv = createNodejsEnv()
             setEnv({
                 type: "node",
-                utils: utils,
-                ...createNodejsEnv()
+                ...nodejsenv
             });
         }
 
         getUtils()
     }
 
-    function createNodejsEnv() {
-
-        const fs = require('fs');
-        const face_api = require('./face-api');
+    /**
+     * get mongodb utils
+     */
+    async function get_mongodb() {
         const mongodb = require('mongodb');
-        const path = require('path');
-        const stringify = require('fast-json-stable-stringify');
-        const { StringDecoder } = require('string_decoder');
-        const SocketIO = require("socket.io");
-        const moment = require('moment');
-        moment.locale('es');
-        const MODELS_URL = path.join(__dirname, '/mvfy/models');
-        const CONFIG_URL = path.join(__dirname, '/../config');
-
         /**
          * Get functions to manage mongodb conection
          */
-        async function utils_mongodb() {
+        let utils_mongo = async() => {
 
             let MongoClient = require('mongodb').MongoClient
 
@@ -257,20 +247,39 @@
                 }
             }
 
-        }
+        };
+        let mongo = await utils_mongo();
+
+        setEnv({
+            ...environment,
+            mongo: mongo,
+            mongodb: mongodb,
+        })
+    }
+
+    function createNodejsEnv() {
+
+        const fs = require('fs');
+        const face_api = require('./face-api');
+        const path = require('path');
+        const stringify = require('fast-json-stable-stringify');
+        const { StringDecoder } = require('string_decoder');
+        const SocketIO = require("socket.io");
+        const moment = require('moment');
+        moment.locale('es');
+        const MODELS_URL = path.join(__dirname, '/mvfy/models');
+        const CONFIG_URL = path.join(__dirname, '/../config');
+
+
 
         return {
             fs: fs,
             face_api: face_api,
-            mongo: await utils_mongodb(),
-            mongodb: mongodb,
             path: path,
             stringify: stringify,
             StringDecoder: StringDecoder,
             SocketIO: SocketIO,
             moment: moment,
-            UNKNOWS_URL: UNKNOWS_URL,
-            ACQUAINTANCES_URL: ACQUAINTANCES_URL,
             MODELS_URL: MODELS_URL,
             CONFIG_URL: CONFIG_URL
         }
@@ -296,11 +305,11 @@
     const CONFIG_URL = environment.CONFIG_URL;
     const DATE_FORMAT = "DD/MM/YYYY"
     const PORT = process.env.PORT || 3000;
-    const ALLOWED_FEATURE = ['all', 'ageandgender', 'expressions', 'none'];
-    const MIN_DATE_KNOWLEDG = ['1', 'week'];
-    const TYPE_SYSTE = ['optimized', 'precise'];
+    const ALLOWED_FEATURES = ['all', 'ageandgender', 'expressions', 'none'];
+    const MIN_DATE_KNOWLEDGE = ['1', 'week'];
+    const TYPE_SYSTEM = ['optimized', 'precise'];
     const KEY_ARGUMENT = ['min_date_knowledge', 'file_extension', 'features', 'type_system'];
-    const VALID_TYPE_DAT = ["day", "week", "month", "year"];
+    const VALID_TYPE_DATE = ["day", "week", "month", "year"];
     const MONGO_CONFIG = {
         MONGO_USERNAME: '',
         MONGO_PASSWORD: '',
@@ -325,16 +334,19 @@
     // <----------------------------- VALIDATE ENVIROMENT ----------------------------->
 
     if (environment.type === "node") {
-        class MvfyHsv {
 
-            // "use strict";
+        class MvfyHsv {
 
             /**
              * Constructor principal del modelo
-             * @param {String} name nombre personalizado del sistema
+             * @params {String} name nombre personalizado del sistema
              * @param {String} name_file nombre del archivo donde se guardaran las detecciones
              */
             constructor(args = {}) {
+
+                (async() => {
+                    await get_mongodb();
+                })();
 
                 let { server, options } = args
 
@@ -346,6 +358,7 @@
                 this.max_descriptor_distance = 0.7
                 this.bd = environment.mongo;
                 this.execution = false;
+                console.log(environment)
                 this.io = environment.SocketIO(server, options)
 
             }
@@ -365,7 +378,7 @@
             }
 
             /**
-             * Validaciones
+             * Validations of instance
              * @param {String} type el tipo de dato necesario o argumento requerido
              * @return {Error} mensaje de error indicando el tipo erroneo o falta de variable
              *  
@@ -496,7 +509,7 @@
             }
 
             /**
-             * Cargar los modelos e iniciar video
+             * Load models and initialize video
              * @param {String} features variable con la caracteristica adicional a la predicción
              * @param {String} type_system tipo de sistema optimo o preciso
              */
@@ -535,7 +548,6 @@
 
             /**
              * Detect faces and tag them
-             * 
              * @param {String} route ruta de guardado de las imagenes
              * @param {Array} labels nombre u etiqueta de las imagenes de los usuarios
              * @return {FaceMatcher}
@@ -574,7 +586,7 @@
              */
             async initSystem(data) {
                 try {
-                    let ObjectId = mongodb.ObjectId
+                    let ObjectId = environment.mongodb.ObjectId
                     let system = null
                     this.validateInstance(data)
                     if (data.id == null) {
@@ -616,23 +628,35 @@
                     }))
                 }
             }
+
+            /**
+             * Evaluate detection of face user
+             * @param {Object} user 
+             */
+            async evaluate_detection(user) {
+                let detection = this.bd.update(collection.USERS, {
+                    _id: new ObjectId(user._id)
+                }, {
+                    history: enviroment.convertString2Int(user.history) + 1
+                })
+                console.log("detection insert", detection)
+            }
+
+            /**
+             * Evaluate new detection
+             * @param {Object} data 
+             */
             async setDetection(data) {
-                let ObjectId = mongodb.ObjectId
+                let ObjectId = enviroment.mongodb.ObjectId
                 try {
                     if (data.id != null && data.label != null) {
-                        let exist_user = await this.bd.findOne(collections.USERS, {
+                        let exist_user = await this.bd.findOne(collection.USERS, {
                             label: data.label,
                             system_id: data.id
                         })
 
                         if (exist_user) {
-                            let actual_history = convertString2Int(exist_user.history) + 1
-                            let detection = this.bd.update(collections.USERS, {
-                                _id: new ObjectId(exist_user._id)
-                            }, {
-                                history: convertString2Int(exist_user.history) + 1
-                            })
-                            console.log("detection insert", detection)
+                            await this.evaluate_detection(exist_user)
                         } else {
                             await this.bd.insert(collection.USERS, {
                                 system_id: data.id,
@@ -641,6 +665,7 @@
                                 age: data.age,
                                 history: 0,
                                 knowledge: false,
+                                end_date: enviroment.moment()
                             })
                         }
                     }
@@ -654,13 +679,26 @@
                 }
             }
 
+            /**
+             * websocket - connection
+             */
             connect() {
                 this.io.on('connection', (ws) => this.ws(ws))
             }
+
+            /**
+             * Websocket - initizalize receiver 
+             * @param {SocketIO} socket 
+             */
             ws(socket) {
                 console.log("websocket connect")
                 socket.on("message", (json) => this.receiver(json))
             }
+
+            /**
+             * Websocket - manage receiver
+             * @param {String} json 
+             */
             receiver(json) {
                 let data = JSON.parse(json)
                 switch (data.action) {
@@ -677,10 +715,9 @@
         }
 
         exports.MvfyHsv = MvfyHsv
-
+        Object.defineProperty(exports, '__esModule', { value: true });
     } else if (environment.type === "browser") {
-        $.getScript('mvfy/socket.io.min.js')
-        $.getScript('mvfy/face-api.js')
+
         class MvfyHsv {
 
             /**
@@ -689,6 +726,11 @@
              * @param {String} name_file nombre del archivo donde se guardaran las detecciones
              */
             constructor(args) {
+
+                (async() => {
+                    await $.getScript('mvfy/socket.io.min.js')
+                    await $.getScript('mvfy/face-api.js')
+                })();
 
                 this.id = null
                 this.min_date_knowledge = MIN_DATE_KNOWLEDGE

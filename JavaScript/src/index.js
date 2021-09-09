@@ -7,6 +7,16 @@ const express = require('express');
 const { MvfyHsv } = require('./mvfy/mvfy-hsv');
 const { PORT } = require('./utils/constants');
 const app = express();
+
+// static files
+app.use('/static', express.static(__dirname + '/public'));
+
+//routes
+app.get('/', function(req, res) {
+    res.render('index');
+});
+
+//init server
 const server = require('http').Server(app);
 
 
