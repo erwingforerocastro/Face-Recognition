@@ -1,10 +1,10 @@
 /**
- * Index principal
+ * Priincipal index
  * @author: Erwing FC erwingforerocastro@gmail.com
  */
 // require('@tensorflow/tfjs - node');
-const express = require('express');
-const { MvfyHsv } = require('./mvfy/mvfy-hsv');
+import express from 'express'
+import MvfyHsv from './mvfy/mvfy-hsv';
 const { PORT } = require('./utils/constants');
 const app = express();
 

@@ -1,6 +1,4 @@
-import { makeSystem } from "../../entities";
-
-export default function makeAddSystem({ systemsDB }) {
+export default function makeAddSystem({ systemsDB, makeSystem }) {
     return async function addSystem(systemInfo) {
 
         const system = makeSystem(systemInfo);

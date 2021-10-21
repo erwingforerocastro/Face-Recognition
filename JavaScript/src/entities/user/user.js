@@ -1,18 +1,18 @@
 export default function buildMakeUser({ Id }) {
-    return function makeComment({
+    return function makeUser({
         id = Id.makeId(),
         author,
         createdOn = Date.now(),
         modifiedOn = Date.now(),
     } = {}) {
         if (!Id.isValidId(id)) {
-            throw new Error('Comment must have a valid id.')
+            throw new Error('User must have a valid id.')
         }
 
         return Object.freeze({
             getAuthor: () => author,
             getCreatedOn: () => createdOn,
-            getHash: () => hash || (hash = makeHash()),
+            getModifiedOn: () => modifiedOn,
             getId: () => id,
         })
 

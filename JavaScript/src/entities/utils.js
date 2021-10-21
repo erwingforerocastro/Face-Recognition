@@ -17,14 +17,14 @@ function systemValidator(args = {}) {
                 throw new Error('decoder must be a string')
             }
         },
-        validate_max_descriptor_distance: (distance) => {
+        validate_maxDescriptorDistance: (distance) => {
             if (typeof(distance) !== "number" && (distance < 0 && distance > 1)) {
-                throw new Error('distance must be a number in range 0-1')
+                throw new Error('maxDescriptorDistance must be a number in range 0-1')
             }
         },
-        validate_min_date_knowledge: (date) => {
+        validate_minDateKnowledge: (date) => {
             if (typeof(date) !== 'string') {
-                throw new Error('min_date_knowledge must be a string')
+                throw new Error('minDateKnowledge must be a string')
             }
         },
         validate_features: (features) => {
@@ -32,9 +32,9 @@ function systemValidator(args = {}) {
                 throw new Error('features must be a [String or Array], permissible [all, ageAndgender, expressions, none]')
             }
         },
-        validate_type_system(type_system) {
+        validate_typeSystem(type_system) {
             if (typeof(type_system) === 'string' && TYPE_SYSTEM.includes(type_system)) {
-                throw new Error('type_system must be a string, permissible [optimized, precise]')
+                throw new Error('typeSystem must be a string, permissible [optimized, precise]')
             }
         }
     })
@@ -46,6 +46,7 @@ function systemValidator(args = {}) {
         validator[`${v}`](args[`${name}`]);
     });
 }
+
 export {
     systemValidator
 }

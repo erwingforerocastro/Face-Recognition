@@ -1,40 +1,25 @@
-import * as mongo from 'mongodb'
+import makeSystemDB from './mongodb/system-mongo'
+import makeUserDB from './mongodb/user-mongo'
+import MongoDB from './mongodb/mongodb'
 
-const MongoClient = mongo.MongoClient;
 
-(async() => {
-    let mongoUrl = `mongodb://${MONGO_CONFIG.MONGO_USERNAME}:${MONGO_CONFIG.MONGO_PASSWORD}@${MONGO_CONFIG.MONGO_HOSTNAME}:${MONGO_CONFIG.MONGO_PORT}/${MONGO_CONFIG.MONGO_DB}`;
-    console.log(mongoUrl);
-    let db = null
+const env = process.env
 
-    /**
-     * connect bd
-     * @returns {MongoClient.db}
-     */
-    let _connect = async() => {
-        try {
-            let url = mongoUrl
-            let _db = await MongoClient.connect(url, { useUnifiedTopology: true, useNewUrlParser: true, poolSize: 10 })
-            db = _db
-            return _db.db()
-        } catch (e) {
-            return e
-        }
-    }
+const properties = {
+    url: env.MFY_MONGOURL || "",
+    MONGO_USERNAME: env.MVFY_MONGO_USERNAME || "",
+    MONGO_PASSWORD: env.MVFY_MONGO_PASSWORD || "",
+    MONGO_HOSTNAME: env.MVFY_MONGO_HOSTNAME || "",
+    MONGO_PORT: env.MVFY_MONGO_PORT || "",
+    MONGO_DB: env.MVFY_MONGO_DB || "",
+}
 
-    /**
-     * Get actual connection
-     * @returns {MongoClient.db}
-     */
-    let getConnection = async() => {
-        try {
-            if (db == null) {
-                db = await _connect()
-                console.log('Connected', db)
-            }
-            return db
-        } catch (e) {
-            return e
-        }
-    }
-})()
+const client = new MongoDB(properties)
+
+const SystemDB = makeSystemDB({ client })
+const UserDB = makeUserDB({ client })
+
+export {
+    SystemDB,
+    UserDB
+}

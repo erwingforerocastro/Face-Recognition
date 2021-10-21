@@ -1,28 +1,34 @@
-export default function buildMakeSystem({ validator }) {
+export default function buildMakeSystem({ Id, validator }) {
     return function makeSystem({
         decoder,
-        distance,
-        date,
+        maxDescriptorDistance,
+        minDateKnowledge,
         features,
-        type_system,
+        typeSystem,
+        id = Id.makeId(),
         createdOn = Date.now(),
         modifiedOn = Date.now(),
     } = {}) {
 
         validator({
             decoder: decoder,
-            distance: distance,
-            date: date,
+            maxDescriptorDistance: maxDescriptorDistance,
+            minDateKnowledge: minDateKnowledge,
             features: features,
-            type_system: type_system
+            typeSystem: typeSystem
         })
 
+        if (!Id.isValidId(id)) {
+            throw new Error('System must have a valid id.')
+        }
+
         return Object.freeze({
+            getId: () => id,
             getDecoder: () => decoder,
-            geDistance: () => distance,
-            getDate: () => date,
+            geMaxDescriptorDistance: () => maxDescriptorDistance,
+            getMinDateKnowledge: () => minDateKnowledge,
             getFeatures: () => features,
-            getTypeSystem: () => type_system,
+            getTypeSystem: () => typeSystem,
             getCreateOn: () => createdOn,
             getModifiedOn: () => modifiedOn
         })

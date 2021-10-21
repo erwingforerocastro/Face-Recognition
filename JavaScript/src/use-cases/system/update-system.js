@@ -1,16 +1,17 @@
-import { makeSystem } from "../../entities";
-import makeAddSystem from "./add-system";
-
-export default function makeUpdateSystem({ systemsDB }) {
+export default function makeUpdateSystem({ systemsDB, makeSystem }) {
     return async function updateSystem({ id, ...changes } = {}) {
+
         if (!id) {
             throw new Error('You must supply an id.')
         }
-        const existingSystem = await systemsDB.findById({ id })
-        if (!existingSystem) {
-            makeAddSystem()
-        }
+
+        const existingSystem = await systemsDB.findById({ id });
         const system = makeSystem({...existingSystem, ...changes });
+
+        if (!existingSystem) {
+            return system
+        }
+
         return systemsDB.update({
             id: id,
             decoder: system.getDecoder(),
