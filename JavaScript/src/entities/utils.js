@@ -1,7 +1,11 @@
-import { ALLOWED_FEATURES, TYPE_SYSTEM } from '../utils/constants'
-
+import {
+    ALLOWED_FEATURES,
+    TYPE_SYSTEM,
+    TYPE_SERVICE
+} from '../utils/constants'
+import crypto from 'crypto'
 /**
- * Function to validate values of system
+ * Validate values of system
  * @params {
  * decoder, 
  * distance,
@@ -28,14 +32,20 @@ function systemValidator(args = {}) {
             }
         },
         validate_features: (features) => {
-            if ((typeof(features) !== 'string' && !Array.isArray(features)) || !ALLOWED_FEATURES.includes(features)) {
-                throw new Error('features must be a [String or Array], permissible [all, ageAndgender, expressions, none]')
+            if ((typeof(features) !== 'string' && !Array.isArray(features)) || !Object.values(ALLOWED_FEATURES).includes(features)) {
+                throw new Error(`features must be a [String or Array], permissible: ${Object.values(ALLOWED_FEATURES).join(" or ")}`)
             }
         },
-        validate_typeSystem(type_system) {
-            if (typeof(type_system) === 'string' && TYPE_SYSTEM.includes(type_system)) {
-                throw new Error('typeSystem must be a string, permissible [optimized, precise]')
+        validate_typeSystem: (type_system) => {
+            if (typeof(type_system) === 'string' && Object.values(TYPE_SYSTEM).includes(type_system)) {
+                throw new Error(`typeSystem must be a string, permissible: ${Object.values(TYPE_SYSTEM).join(" or ")}`)
             }
+        },
+        validate_typeService: (type_service) => {
+            if (typeof(features) !== 'string' && !Object.values(TYPE_SERVICE).includes(type_service)) {
+                throw new Error(`type_service must be a string, permissible: ${Object.values(TYPE_SERVICE).join(" or ")}`)
+            }
+
         }
     })
 
@@ -43,10 +53,18 @@ function systemValidator(args = {}) {
 
     keys_validator.forEach(v => {
         let name = v.split("validate_")[1];
-        validator[`${v}`](args[`${name}`]);
+        validator[`${ v }`](args[`${ name }`]);
     });
 }
 
+function md5(text) {
+    return crypto
+        .createHash('md5')
+        .update(text, 'utf-8')
+        .digest('hex')
+}
+
 export {
-    systemValidator
+    systemValidator,
+    md5
 }

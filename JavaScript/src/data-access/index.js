@@ -6,7 +6,7 @@ import MongoDB from './mongodb/mongodb'
 const env = process.env
 
 const properties = {
-    url: env.MFY_MONGOURL || "",
+    url: env.MVFY_MONGOURL || "",
     MONGO_USERNAME: env.MVFY_MONGO_USERNAME || "",
     MONGO_PASSWORD: env.MVFY_MONGO_PASSWORD || "",
     MONGO_HOSTNAME: env.MVFY_MONGO_HOSTNAME || "",

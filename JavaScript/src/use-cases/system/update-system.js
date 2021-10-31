@@ -14,6 +14,7 @@ export default function makeUpdateSystem({ systemsDB, makeSystem }) {
 
         return systemsDB.update({
             id: id,
+            type_sevice: system.getTypeService(),
             decoder: system.getDecoder(),
             distance: system.geDistance(),
             date: system.getDate(),

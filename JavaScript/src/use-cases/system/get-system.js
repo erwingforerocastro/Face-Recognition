@@ -1,5 +1,8 @@
 export default function MakeGetSystem({ systemsDB }) {
-    return async function getSystem(id) {
-        return systemsDB.findById({ id })
+    return async function getSystem(systemInfo) {
+        const system = makeSystem(systemInfo);
+        return systemsDB.findByHash({
+            hash: system.getHash()
+        })
     }
 }

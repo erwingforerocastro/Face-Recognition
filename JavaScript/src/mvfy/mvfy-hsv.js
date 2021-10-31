@@ -33,160 +33,134 @@ import { StringDecoder } from 'string_decoder'
 import SocketIO from 'socket.io'
 
 //constants
-import {
-    MODELS_URL,
-    CONFIG_URL,
-    MIN_DATE_KNOWLEDGE,
-    ALLOWED_FEATURES,
-    TYPE_SYSTEM,
-    REQUEST
-} from "../utils/constants"
+import * as constants from "../utils/constants"
 
 import {
     addSystem,
-    getSystem,
-    getUsers
+    getSystems,
+    getUsers,
+    updateSystem
 } from '../use-cases/index'
 
-
-export default class MvfyHsv {
+class MvfyHsv {
 
     /**
-     * Constructor principal del modelo
-     * @params {String} name nombre personalizado del sistema
-     * @param {String} name_file nombre del archivo donde se guardaran las detecciones
+     * Main model builder
+     * @constructor
+     * @param {Object} args
+     * @param {*} args.server - Backend server for the websocket. 
+     * @param {Object} args.options - options for the websocket.
+     * @param {String} args.type_service - type of the listen server.
+     * @param {Array} args.min_date_knowledge [min_date_knowledge=null] - minimum interval to determine a known user.
+     * @param {String} args.features [features=null] - characteristics that will be saved in each detection.
+     * @param {String} args.decoder [decoder='utf-8'] - data decoder.
+     * @param {String} args.max_descriptor_distance [max_descriptor_distance=null] - max distance of diference between detections.
+     * @param {String} args.type_system [type_system=null] - type of system.
      */
     constructor(args = {}) {
 
-        let { server, options } = args
+        let { server, options, ...otherInfo } = args
+        //create or return system of bd
+        let system = (otherInfo.type_service == constants.TYPE_SERVICE.LOCAL) ? this._create(otherInfo) : otherInfo;
+        ({
+            type_service: this.type_service, // *required
+            id: this.id = null,
+            min_date_knowledge: this.min_date_knowledge = null,
+            features: this.features = null,
+            decoder: this.decoder = 'utf-8',
+            max_descriptor_distance: this.max_descriptor_distance = null,
+            type_system: this.type_system = null,
+        } = system)
+
+        this.execution = false
+        this.type_model_detection = null
 
         if (server == null || options == null) {
-            throw new Error("server u options argument is required")
+            throw new Error("server and options argument is required")
         }
 
-        this.min_date_knowledge = MIN_DATE_KNOWLEDGE
-        this.features = ALLOWED_FEATURES[0]
-        this.type_system = TYPE_SYSTEM[0]
-        this.type_model_detection = ""
-        this.decoder = 'utf-8'
-        this.max_descriptor_distance = 0.7
-        this.execution = false;
         this.io = SocketIO(server, options)
 
     }
 
     /**
+     * Init system in backend process
+     */
+    start() {
+        if (this.id == null || type != "server") {
+            throw new Error("Required initialize system")
+        }
+        this.io.on('connection', (ws) => this.ws(ws))
+        this.execution = true
+    }
+
+    /**
+     * Create system
+     * @param {Object} data 
+     * @return {Object} system
+     */
+    _create(data) {
+        let system = {}
+        const similarSystems = getSystems({
+            query: {...data }
+        })
+
+        if (similarSystems) {
+            system = similarSystems[0]
+        } else {
+            system = addSystem(data)
+        }
+        return system
+    }
+
+    /**
+     * Update data of actual system
+     * @param {Object} data Data to be update system
+     */
+    _update(data) {
+        let { id, ...otherInfo } = this
+        let system = updateSystem({
+            ...data,
+            id
+        })
+        this._insert(system)
+    }
+
+    /**
+     * Insert data in actual instance of system
+     * @param {Object} system Data of system
+     */
+    _insert(system) {
+        ({
+            id: this.id,
+            min_date_knowledge: this.min_date_knowledge,
+            features: this.features,
+            type_system: this.type_system,
+            type_model_detection: this.type_model_detection,
+            decoder: this.decoder,
+            max_descriptor_distance: this.max_descriptor_distance,
+        } = system)
+    }
+
+
+    /**
      * Funcion para retornar el estado actual del sistema
      * @return {Object} objeto con algunos atributos del sistema
      */
-    get attributes() {
+    get values() {
 
         return {
-            minimum_date_of_knowledge: this.min_date_knowledge,
+            id: this.id,
+            min_date_knowledge: this.min_date_knowledge,
             features: this.features,
             type_system: this.type_system,
+            type_model_detection: this.type_model_detection,
+            decoder: this.decoder,
+            max_descriptor_distance: this.max_descriptor_distance,
             execution: (this._execution) ? 'System on' : 'System off'
         };
     }
 
-    /**
-     * Validations of instance
-     * @param {String} type el tipo de dato necesario o argumento requerido
-     * @return {Error} mensaje de error indicando el tipo erroneo o falta de variable
-     *  
-     */
-    isRequired(type = null) {
-
-        throw new Error(
-            (type !== null) ? `Missing parameter. Expected ${type}` : `Missing parameter`
-        );
-    }
-
-    /**
-     * Validaciones de una instancia
-     * @param {Object} args argumentos de la instancia de MvfyHsv
-     * @return {Array} contiene la validacion y el valor ej: [[true,'nuevo sistema'], ...]
-     *  
-     */
-    validateInstance(args = {}) {
-
-        const validator = {
-            validate_decoder: (decoder) => {
-                if (typeof(decoder) === 'string') {
-                    let _decoder = new StringDecoder(decoder);
-                    return [true, _decoder];
-                }
-
-                isRequired('decoder [String]');
-                return [false];
-            },
-            validate_max_descriptor_distance: (distance) => {
-                if (typeof(distance) === "number" && (distance > 0 && distance < 1)) {
-                    return [true, distance];
-                }
-                isRequired('max_descriptor_distance [Number] (min:0.1, max:0.9)');
-                return [false];
-            },
-            validate_min_date_knowledge: (date) => {
-                let pattern1 = new RegExp(`${VALID_TYPE_DATE.join("(s)*|")}`, "g")
-                let pattern2 = new RegExp(`^\d+ *${pattern1}`, "g")
-                if (Array.isArray(date)) {
-                    if (parseInt(date[0]) !== NaN && date[1].test(pattern1)) {
-
-                        date = [date[0], date[1]];
-                        return [true, date];
-                    }
-
-                } else if (typeof(date) === 'string') {
-                    date = date.match(pattern2) || MIN_DATE_KNOWLEDGE;
-                    return [true, date];
-                }
-
-                isRequired('min_date_knowledge [String or Array], permissible: ["1", "month"] or "1 week"');
-                return [false];
-            },
-            validate_features: (features) => {
-                if ((typeof(features) === 'string' || Array.isArray(features)) && ALLOWED_FEATURES.includes(features)) {
-                    return [true, features];
-                }
-                isRequired('features [String or Array], permissible [all, ageAndgender, expressions, none]');
-                return [false];
-            },
-            validate_type_system(type_system) {
-                if (typeof(type_system) === 'string' && TYPE_SYSTEM.includes(type_system)) {
-                    return [true, type_system];
-                }
-                isRequired('type_system [String], permissible [optimized, precise]');
-                return [false];
-            }
-        }
-
-        let total_validations = {};
-        let validate_args = [];
-        const keys_validator = Object.keys(validator);
-
-        keys_validator.forEach((v, i) => {
-            let name = v.split("validate_")[1];
-            let value = (args[`${name}`]) ? validator[`${v}`](args[`${name}`]) : validator[`${v}`]("");
-            total_validations[`${name}`] = value[1];
-            validate_args.push(value[0])
-        });
-
-
-        if (validate_args.reduce((acc, el) => acc && el)) {
-
-            ({
-                min_date_knowledge: this.min_date_knowledge = this.min_date_knowledge,
-                features: this.features = this.features,
-                type_system: this.type_system = this.type_system,
-                decoder: this.decoder = this.decoder
-            } = {...total_validations });
-
-        } else {
-            return new Error('Instancia no valida, verfique las caracteristicas del modelo')
-        }
-
-    }
 
     /**
      * Iniciar las configuraciones iniciales del sistema 
@@ -226,7 +200,7 @@ export default class MvfyHsv {
      * @param {String} type_system tipo de sistema optimo o preciso
      */
     async loadExternalModels(features, type_system) {
-        const url = MODELS_URL;
+        const url = constants.MODELS_URL;
 
         try {
 
@@ -308,6 +282,12 @@ export default class MvfyHsv {
                 system = (_system == null) ? await addSystem(all_data) : _system
             }
 
+            if (system) {
+
+            } else {
+                throw new Error("System not found")
+            }
+
             let matches = getUsers({
                 query: {
                     idSystem: id
@@ -317,7 +297,7 @@ export default class MvfyHsv {
             matches = (matches != null) ? matches : []
 
             this.io.send(stringify({
-                action: REQUEST.GET_INITIALIZED_SYSTEM,
+                action: constants.REQUEST.GET_INITIALIZED_SYSTEM,
                 data: {
                     id: system._id,
                     matches: matches
@@ -325,7 +305,7 @@ export default class MvfyHsv {
             }))
         } catch (error) {
             this.io.send(stringify({
-                action: REQUEST.ERROR,
+                action: constants.REQUEST.ERROR,
                 data: {
                     error: `Error in initSystem ${error}`
                 }
@@ -351,7 +331,6 @@ export default class MvfyHsv {
      * @param {Object} data 
      */
     async setDetection(data) {
-        let ObjectId = enviroment.mongodb.ObjectId
         try {
             if (data.id != null && data.label != null) {
                 let exist_user = await this.bd.findOne(collection.USERS, {
@@ -375,19 +354,12 @@ export default class MvfyHsv {
             }
         } catch (error) {
             this.io.send(stringify({
-                action: REQUEST.ERROR,
+                action: constants.REQUEST.ERROR,
                 data: {
                     error: `Error insert detection ${error}`
                 }
             }))
         }
-    }
-
-    /**
-     * websocket - connection
-     */
-    connect() {
-        this.io.on('connection', (ws) => this.ws(ws))
     }
 
     /**
@@ -415,5 +387,10 @@ export default class MvfyHsv {
         }
     }
 
-
 }
+
+MvfyHsv.const = Object.freeze({
+    ...constants
+})
+
+export default MvfyHsv

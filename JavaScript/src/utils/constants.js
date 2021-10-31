@@ -7,17 +7,18 @@ const MODELS_URL = path.join(__dirname, '/mvfy/models');
 const CONFIG_URL = path.join(__dirname, '/../config');
 const PORT = process.env.PORT || 3000;
 const DATE_FORMAT = "DD/MM/YYYY"
-const ALLOWED_FEATURES = ['all', 'ageandgender', 'expressions', 'none'];
-const MIN_DATE_KNOWLEDGE = ['1', 'week'];
-const TYPE_SYSTEM = ['optimized', 'precise'];
-const KEY_ARGUMENT = ['min_date_knowledge', 'file_extension', 'features', 'type_system'];
-const VALID_TYPE_DATE = ["day", "week", "month", "year"];
-const MONGO_CONFIG = {
-    MONGO_USERNAME: '',
-    MONGO_PASSWORD: '',
-    MONGO_HOSTNAME: 'localhost',
-    MONGO_PORT: '27017',
-    MONGO_DB: 'mvfy_hsv',
+const ALLOWED_FEATURES = {
+    ALL: "all",
+    AGE_AND_GENDER: "ageandgender",
+    EXPRESSIONS: "expressions",
+};
+const TYPE_SYSTEM = {
+    OPTIMIZED: "optimized",
+    PRECISE: "precise"
+};
+const TYPE_SERVICE = {
+    REMOTE: "remote",
+    LOCAL: "local"
 }
 const ACTION = {
     INIT_SYSTEM: "INIT_SYSTEM",
@@ -28,17 +29,49 @@ const REQUEST = {
     GET_MODEL_FEATURES: "GET_MODEL_FEATURES",
     GET_INITIALIZED_SYSTEM: "GET_INITIALIZED_SYSTEM"
 };
-const collection = {
-    SYSTEMS: "systems",
-    USERS: "users"
-};
 
+//time
+
+const DAYS = (quantity) => {
+    quantity = Number(quantity)
+    if (typeof(quantity) == 'number') {
+        return Array(quantity, "days")
+    } else {
+        throw new TypeError("type of the quantity days is invalid")
+    }
+}
+const WEEKS = (quantity) => {
+    quantity = Number(quantity)
+    if (typeof(quantity) == 'number') {
+        return Array(quantity, "weeks")
+    } else {
+        throw new TypeError("type of the quantity weeks is invalid")
+    }
+}
+
+const MONTHS = (quantity) => {
+    quantity = Number(quantity)
+    if (typeof(quantity) == 'number') {
+        return Array(quantity, "months")
+    } else {
+        throw new TypeError("type of the quantity months is invalid")
+    }
+}
 export {
     UNKNOWS_URL,
     ACQUAINTANCES_URL,
+    MIN_DATE_KNOWLEDGE,
     MODELS_URL,
     CONFIG_URL,
     PORT,
+    TYPE_SYSTEM,
+    TYPE_SERVICE,
     DATE_FORMAT,
-    ALLOWED_FEATURES
+    ALLOWED_FEATURES,
+    ACTION,
+    REQUEST,
+    DAYS,
+    WEEKS,
+    MONTHS,
+
 }

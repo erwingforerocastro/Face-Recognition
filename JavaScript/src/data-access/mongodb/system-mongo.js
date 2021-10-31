@@ -8,6 +8,7 @@ export default function makeSystemDB({ client }) {
     return Object.freeze({
         findAll,
         findById,
+        findByHash,
         insert,
         remove,
         update
@@ -26,6 +27,15 @@ export default function makeSystemDB({ client }) {
             return null
         }
         const { _id: id, ...info } = found[0]
+        return { id, ...info }
+    }
+
+    async function findByHash({ hash }) {
+        const found = await db.findOne(collection, { hash })
+        if (found == null) {
+            return null
+        }
+        const { _id: id, ...info } = found
         return { id, ...info }
     }
 
