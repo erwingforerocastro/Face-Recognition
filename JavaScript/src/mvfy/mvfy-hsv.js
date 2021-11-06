@@ -61,19 +61,19 @@ class MvfyHsv {
 
         let { server, options, ...otherInfo } = args
         //create or return system of bd
-        let system = (otherInfo.type_service == constants.TYPE_SERVICE.LOCAL) ? this._create(otherInfo) : otherInfo;
-        ({
-            type_service: this.type_service, // *required
-            id: this.id = null,
-            min_date_knowledge: this.min_date_knowledge = null,
-            features: this.features = null,
-            decoder: this.decoder = 'utf-8',
-            max_descriptor_distance: this.max_descriptor_distance = null,
-            type_system: this.type_system = null,
-        } = system)
 
+        this._require_create = (otherInfo.type_service == constants.TYPE_SERVICE.LOCAL)
+        this.type_service = otherInfo.type_service //*required
+        this.id = null
+        this.features = null
+        this.min_date_knowledge = null
+        this.decoder = 'utf-8'
+        this.max_descriptor_distance = null
+        this.type_system = null
         this.execution = false
         this.type_model_detection = null
+
+        this._insert(otherInfo)
 
         if (server == null || options == null) {
             throw new Error("server and options argument is required")
@@ -86,8 +86,12 @@ class MvfyHsv {
     /**
      * Init system in backend process
      */
-    start() {
-        if (this.id == null || type != "server") {
+    async start() {
+        if (this._require_create) {
+            let system = await this._create(this.values)
+            this._insert()
+        }
+        if (this.id == null && this.type == constants.TYPE_SERVICE.LOCAL) {
             throw new Error("Required initialize system")
         }
         this.io.on('connection', (ws) => this.ws(ws))
@@ -99,16 +103,16 @@ class MvfyHsv {
      * @param {Object} data 
      * @return {Object} system
      */
-    _create(data) {
+    async _create(data) {
         let system = {}
-        const similarSystems = getSystems({
-            query: {...data }
+        const similarSystem = await getSystem({
+            query: data
         })
 
-        if (similarSystems) {
-            system = similarSystems[0]
+        if (similarSystem != null) {
+            system = similarSystem
         } else {
-            system = addSystem(data)
+            system = await addSystem(data)
         }
         return system
     }
@@ -132,13 +136,13 @@ class MvfyHsv {
      */
     _insert(system) {
         ({
-            id: this.id,
-            min_date_knowledge: this.min_date_knowledge,
-            features: this.features,
-            type_system: this.type_system,
-            type_model_detection: this.type_model_detection,
-            decoder: this.decoder,
-            max_descriptor_distance: this.max_descriptor_distance,
+            id: this.id = this.id,
+            min_date_knowledge: this.min_date_knowledge = this.min_date_knowledge,
+            features: this.features = this.features,
+            type_system: this.type_system = this.type_system,
+            type_model_detection: this.type_model_detection = this.type_model_detection,
+            decoder: this.decoder = this.decoder,
+            max_descriptor_distance: this.max_descriptor_distance = this.max_descriptor_distance,
         } = system)
     }
 
@@ -157,7 +161,6 @@ class MvfyHsv {
             type_model_detection: this.type_model_detection,
             decoder: this.decoder,
             max_descriptor_distance: this.max_descriptor_distance,
-            execution: (this._execution) ? 'System on' : 'System off'
         };
     }
 
@@ -272,25 +275,21 @@ class MvfyHsv {
     async initSystem(data) {
         try {
             let system = null
-            let { id, ...all_data } = data
-            if (id == null) {
-                system = await addSystem(all_data)
+            if (this.type_service == constants.TYPE_SERVICE.REMOTE) {
+                let { id, ...all_data } = data
+                if (id == null) {
+                    system = await this._create(all_data)
+                } else {
+                    let _system = await getSystem(all_data);
+                    system = (_system == null) ? await addSystem(all_data) : _system
+                }
             } else {
-                let _system = await getSystem({
-                    id
-                });
-                system = (_system == null) ? await addSystem(all_data) : _system
-            }
-
-            if (system) {
-
-            } else {
-                throw new Error("System not found")
+                system = this.values()
             }
 
             let matches = getUsers({
                 query: {
-                    idSystem: id
+                    idSystem: system.id
                 }
             })
 
