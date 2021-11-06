@@ -8,6 +8,7 @@ export default function makeUserDB({ client }) {
     return Object.freeze({
         findAll,
         findById,
+        findOne,
         insert,
         remove,
         update
@@ -32,8 +33,17 @@ export default function makeUserDB({ client }) {
         return { id, ...info }
     }
 
+    async function findOne({ query, parameters }) {
+        const found = await db.findOne(collection, query, parameters)
+        if (found) {
+            return null
+        }
+        const { _id: id, ...info } = found
+        return { id, ...info }
+    }
+
     async function insert({ id: _id = Id.makeId(), ...systemInfo }) {
-        const result = await db.find(collection, { _id, ...systemInfo })
+        const result = await db.insert(collection, { _id, ...systemInfo })
         const { _id: id, ...insertedInfo } = result.ops[0]
         return { id, ...insertedInfo }
     }

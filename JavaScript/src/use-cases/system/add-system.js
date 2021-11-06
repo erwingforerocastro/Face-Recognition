@@ -7,11 +7,12 @@ export default function makeAddSystem({ systemsDB, makeSystem }) {
             type_service: system.getTypeService(),
             max_descriptor_distance: system.geMaxDescriptorDistance(),
             min_date_knowledge: system.getMinDateKnowledge(),
+            min_frequency: system.getMinFrecuency(),
             features: system.getFeatures(),
             type_system: system.getTypeSystem(),
             hash: system.getHash(),
-            createdOn: system.getCreateOn(),
-            modifiedOn: system.getModifiedOn()
+            created_on: system.getCreateOn(),
+            modified_on: system.getModifiedOn()
         })
     }
 }

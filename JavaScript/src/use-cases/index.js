@@ -18,6 +18,8 @@ import MakeGetSystem from "./system/get-system";
 //user
 import makeAddUser from "./user/add-user";
 import makeGetUsers from "./user/get-users";
+import makeUpdateUser from "./user/update-user";
+import makeGetUser from "./user/get-user";
 
 
 // System
@@ -29,11 +31,16 @@ const getSystem = MakeGetSystem({ systemsDB })
 // User
 const addUser = makeAddUser({ UserDB, makeUser })
 const getUsers = makeGetUsers({ UserDB })
+const getUser = makeGetUser({ usersDB })
+const updateUser = makeUpdateUser({ usersDB, makeUser })
+
 export {
     addSystem,
     updateSystem,
     getSystem,
     deleteSystem,
     addUser,
-    getUsers
+    getUsers,
+    getUser,
+    updateUser
 }

@@ -37,9 +37,12 @@ import * as constants from "../utils/constants"
 
 import {
     addSystem,
+    addUser,
     getSystems,
+    getUser,
     getUsers,
-    updateSystem
+    updateSystem,
+    updateUser
 } from '../use-cases/index'
 
 class MvfyHsv {
@@ -52,6 +55,7 @@ class MvfyHsv {
      * @param {Object} args.options - options for the websocket.
      * @param {String} args.type_service - type of the listen server.
      * @param {Array} args.min_date_knowledge [min_date_knowledge=null] - minimum interval to determine a known user.
+     * @param {Number} args.min_frequency [min_frequency=0.7] - minimum frequency between days detectioned.
      * @param {String} args.features [features=null] - characteristics that will be saved in each detection.
      * @param {String} args.decoder [decoder='utf-8'] - data decoder.
      * @param {String} args.max_descriptor_distance [max_descriptor_distance=null] - max distance of diference between detections.
@@ -67,6 +71,7 @@ class MvfyHsv {
         this.id = null
         this.features = null
         this.min_date_knowledge = null
+        this.min_frequency = 0.7
         this.decoder = 'utf-8'
         this.max_descriptor_distance = null
         this.type_system = null
@@ -89,7 +94,8 @@ class MvfyHsv {
     async start() {
         if (this._require_create) {
             let system = await this._create(this.values)
-            this._insert()
+            this.execution = true
+            this._insert(system)
         }
         if (this.id == null && this.type == constants.TYPE_SERVICE.LOCAL) {
             throw new Error("Required initialize system")
@@ -104,10 +110,8 @@ class MvfyHsv {
      * @return {Object} system
      */
     async _create(data) {
-        let system = {}
-        const similarSystem = await getSystem({
-            query: data
-        })
+        let system = this.values
+        const similarSystem = await getSystem(data)
 
         if (similarSystem != null) {
             system = similarSystem
@@ -274,17 +278,9 @@ class MvfyHsv {
      */
     async initSystem(data) {
         try {
-            let system = null
-            if (this.type_service == constants.TYPE_SERVICE.REMOTE) {
-                let { id, ...all_data } = data
-                if (id == null) {
-                    system = await this._create(all_data)
-                } else {
-                    let _system = await getSystem(all_data);
-                    system = (_system == null) ? await addSystem(all_data) : _system
-                }
-            } else {
-                system = this.values()
+            let system = await this._create(data)
+            if (system.type_service == constants.TYPE_SERVICE.REMOTE) {
+                this._insert(system)
             }
 
             let matches = getUsers({
@@ -298,7 +294,7 @@ class MvfyHsv {
             this.io.send(stringify({
                 action: constants.REQUEST.GET_INITIALIZED_SYSTEM,
                 data: {
-                    id: system._id,
+                    id: system.id,
                     matches: matches
                 }
             }))
@@ -316,46 +312,60 @@ class MvfyHsv {
      * Evaluate detection of face user
      * @param {Object} user 
      */
-    async evaluate_detection(user) {
-        let detection = this.bd.update(collection.USERS, {
-            _id: new ObjectId(user._id)
-        }, {
-            history: utils.convertString2Int(user.history) + 1
-        })
-        console.log("detection insert", detection)
+    async evaluateDetection(user) {
+        let prevUser = user
+        let diffDate = utils.getDateDiffSoFar(user.init_date, this.values.min_date_knowledge[1] /** type of date see MvFyHsv.const  */ )
+        if (diffDate > this.values.min_date_knowledge[0] /**quantity of date's type */ && user.frequency >= this.values.frequency /**user's frequency is more bigger that system */ ) {
+            user.knowledge = true
+        } else if (utils.getDateDiffSoFar(user.last_date, this.values.min_date_knowledge[1], true) > 0) { // las date is other date's type (eje. days)
+            let prevDays = utils.frequency(this.values.min_date_knowledge[0], 1, this.frequency, true) // previous count of date's type (eje. days)
+            user.last_date = utils.getActualDate()
+            user.frequency = utils.frequency(this.values.min_date_knowledge[0], 1, prevDays + 1) // add this date's type (eje. days)
+        }
+
+        return (prevUser !== user) ? await updateUser({
+            ...user,
+            modified_on: utils.getActualDate()
+        }) : user
+
     }
 
     /**
      * Evaluate new detection
-     * @param {Object} data 
+     * @param {Object} user 
      */
-    async setDetection(data) {
+    async setDetection(user) {
         try {
-            if (data.id != null && data.label != null) {
-                let exist_user = await this.bd.findOne(collection.USERS, {
-                    label: data.label,
-                    system_id: data.id
+            let _user = user
+            if (user.id != null && user.detection != null) {
+                let exist_user = await getUser({
+                    query: {
+                        system_id: this.values.id,
+                        detection: user.detection
+                    }
                 })
 
                 if (exist_user) {
-                    await this.evaluate_detection(exist_user)
+                    _user = await this.evaluateDetection(exist_user)
                 } else {
-                    await this.bd.insert(collection.USERS, {
-                        system_id: data.id,
-                        label: data.label,
-                        gener: data.gener,
-                        age: data.age,
-                        history: 0,
-                        knowledge: false,
-                        end_date: enviroment.moment()
+                    _user = await addUser({
+                        ...user,
+                        modified_on: utils.getActualDate(),
+                        created_on: utils.getActualDate()
                     })
                 }
             }
+            this.io.send(stringify({
+                action: constants.REQUEST.SEND_DETECTION_VALIDATED,
+                data: {
+                    user: _user
+                }
+            }))
         } catch (error) {
             this.io.send(stringify({
                 action: constants.REQUEST.ERROR,
                 data: {
-                    error: `Error insert detection ${error}`
+                    error: `Error validation user - ${user.author} \n: ${error}`
                 }
             }))
         }
@@ -367,21 +377,21 @@ class MvfyHsv {
      */
     ws(socket) {
         console.log("websocket connect")
-        socket.on("message", (json) => this.receiver(json))
+        socket.on("message", async(json) => await this.receiver(json))
     }
 
     /**
      * Websocket - manage receiver
      * @param {String} json 
      */
-    receiver(json) {
+    async receiver(json) {
         let data = JSON.parse(json)
         switch (data.action) {
             case ACTIONS.INIT_SYSTEM:
-                this.initSystem(data.data)
+                await this.initSystem(data.data)
                 break;
             case ACTIONS.SET_DETECTION:
-                this.setDetection(data.data)
+                await this.setDetection(data.data)
                 break;
         }
     }

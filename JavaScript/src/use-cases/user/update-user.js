@@ -1,8 +1,14 @@
-export default function makeAddUser({ usersDB, makeUser }) {
-    return async function addUser(userInfo) {
+export default function makeUpdateUser({ usersDB, makeUser }) {
+    return async function updateUser({ id, ...changes } = {}) {
 
-        const user = makeUser(userInfo);
-        return usersDB.insert({
+        if (!id) {
+            throw new Error('You must supply an id.')
+        }
+
+        const user = makeUser({ id, ...changes });
+
+        return usersDB.update({
+            id: id,
             system_id: user.getSystemId(),
             author: user.getAuthor(),
             detection: user.getDetection(),

@@ -9,19 +9,21 @@ export default function makeUpdateSystem({ systemsDB, makeSystem }) {
         const system = makeSystem({...existingSystem, ...changes });
 
         if (!existingSystem) {
-            return system
+            throw new Error("System nof found, require create system");
         }
 
         return systemsDB.update({
             id: id,
-            type_sevice: system.getTypeService(),
             decoder: system.getDecoder(),
-            distance: system.geDistance(),
-            date: system.getDate(),
+            type_service: system.getTypeService(),
+            max_descriptor_distance: system.geMaxDescriptorDistance(),
+            min_date_knowledge: system.getMinDateKnowledge(),
+            min_frequency: system.getMinFrecuency(),
             features: system.getFeatures(),
             type_system: system.getTypeSystem(),
-            createdOn: system.getCreateOn(),
-            modifiedOn: system.getModifiedOn()
+            hash: system.getHash(),
+            created_on: system.getCreateOn(),
+            modified_on: system.getModifiedOn()
         })
     }
 }
