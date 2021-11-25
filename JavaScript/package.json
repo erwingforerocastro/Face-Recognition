@@ -28,13 +28,14 @@
         "now-build": "npm run build",
         "clean": "rimraf dist",
         "dev": "nodemon --exec babel-node ./src/index.js",
-        "start": "npm run build && npm run db && cd dist && node index.js"
+        "start": "npm run build && node ./dist/index.js"
     },
     "devDependencies": {
         "babel-cli": "^6.26.0",
         "babel-core": "^6.26.3",
         "babel-node": "0.0.1-security",
         "babel-preset-env": "^1.7.0",
+        "babel-preset-stage-3": "^6.24.1",
         "clang-format": "~1.2.2",
         "parcel-bundler": "^1.12.4",
         "rimraf": "^2.6.3",

@@ -51,9 +51,29 @@ const getDateDiffSoFar = (_date, _type = "days", invert = false) => {
     }
 }
 
+/**
+ * Replace keys in text
+ * @param {String} text 
+ * @param {Array[String]} keys values to be replaced
+ * @param {Array[String]} values values 
+ * @return text replaced 
+ */
+const replaceValues = (text, keys, values) => {
+    let tempText = text
+    if (keys.length !== values.length) {
+        throw new Error("keys and values has not same length")
+    }
+    keys.map((v, i) => {
+        tempText.replace(keys[i], values[i])
+    })
+
+    return tempText
+}
+
 export default {
     convertString2Int,
     frecuency,
+    replaceValues,
     getActualDate,
     getDateDiffSoFar
 

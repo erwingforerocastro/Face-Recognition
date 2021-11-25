@@ -31,6 +31,7 @@ import fs from 'file-system'
 import stringify from 'fast-json-stable-stringify'
 import { StringDecoder } from 'string_decoder'
 import SocketIO from 'socket.io'
+import streamer from './streamer'
 
 //constants
 import * as constants from "../utils/constants"
@@ -53,6 +54,7 @@ class MvfyHsv {
      * @param {Object} args
      * @param {*} args.server - Backend server for the websocket. 
      * @param {Object} args.options - options for the websocket.
+     * @param {Any|Number} args.port - Server listen port.
      * @param {String} args.type_service - type of the listen server.
      * @param {Array} args.min_date_knowledge [min_date_knowledge=null] - minimum interval to determine a known user.
      * @param {Number} args.min_frequency [min_frequency=0.7] - minimum frequency between days detectioned.
@@ -68,6 +70,9 @@ class MvfyHsv {
 
         this._require_create = (otherInfo.type_service == constants.TYPE_SERVICE.LOCAL)
         this.type_service = otherInfo.type_service //*required
+        this.port = otherInfo.port
+        this.domain = "localhost"
+        this._stream_fps = 30
         this.id = null
         this.features = null
         this.min_date_knowledge = null
@@ -89,18 +94,38 @@ class MvfyHsv {
     }
 
     /**
+     * Change fps of stream video
+     * @param {number} fps 
+     */
+    change_video_fps(fps) {
+        if (typeof(fps) == "number") {
+            this._stream_fps = fps
+        } else {
+            throw new Error("Invalid fps of video")
+        }
+    }
+
+    /**
      * Init system in backend process
      */
     async start() {
         if (this._require_create) {
-            let system = await this._create(this.values)
-            this.execution = true
+            system = await this._create(this.values)
             this._insert(system)
         }
-        if (this.id == null && this.type == constants.TYPE_SERVICE.LOCAL) {
+
+        if (this.type == constants.TYPE_SERVICE.LOCAL && this.id == null) {
             throw new Error("Required initialize system")
         }
+
         this.io.on('connection', (ws) => this.ws(ws))
+
+        if (this.type == constants.TYPE_SERVICE.LOCAL) {
+            streamer({
+                io: this.io,
+                interval: Math.round(1000 / this._stream_fps)
+            })
+        }
         this.execution = true
     }
 
@@ -279,9 +304,7 @@ class MvfyHsv {
     async initSystem(data) {
         try {
             let system = await this._create(data)
-            if (system.type_service == constants.TYPE_SERVICE.REMOTE) {
-                this._insert(system)
-            }
+            this._insert(system)
 
             let matches = getUsers({
                 query: {
@@ -292,9 +315,9 @@ class MvfyHsv {
             matches = (matches != null) ? matches : []
 
             this.io.send(stringify({
-                action: constants.REQUEST.GET_INITIALIZED_SYSTEM,
+                action: constants.REQUEST.SEND_DETECTION_VALIDATED,
                 data: {
-                    id: system.id,
+                    system_id: system.id,
                     matches: matches
                 }
             }))
@@ -396,6 +419,28 @@ class MvfyHsv {
         }
     }
 
+    /**
+     * use callback of express app for return stream video local
+     * @param {Any} req 
+     * @param {Any} res 
+     */
+    static async getStreamer(req, res) {
+
+        await fs.readFile(constants.HTML_STREAMER.URL, 'utf-8', async(err, data) => {
+            if (err) throw err;
+
+            let keys = [constants.HTML_STREAMER.PORT_REPLACE, constants.HTML_STREAMER.DOMAIN_REPLACE, constants.HTML_STREAMER.EMIT_REPLACE]
+            let values = [req.app.settings.port, req.host, constants.LOCAL_IMAGE_SEND]
+
+            let newData = replaceValues(data, keys, values);
+
+            await fs.writeFile(constants.HTML_STREAMER.URL, newData, 'utf-8', function(err) {
+                if (err) throw err;
+            });
+        });
+
+        res.sendFile(constants.HTML_STREAMER)
+    }
 }
 
 MvfyHsv.const = Object.freeze({

@@ -1,9 +1,18 @@
 class MvfyHsv {
 
     /**
-     * Principal constructor of class
-     * @param {String} name nombre personalizado del sistema
-     * @param {String} name_file nombre del archivo donde se guardaran las detecciones
+     * Main model builder
+     * @constructor
+     * @param {Object} args
+     * @param {*} args.server - Backend server for the websocket. 
+     * @param {Object} args.options - options for the websocket.
+     * @param {String} args.type_service - type of the listen server.
+     * @param {Array} args.min_date_knowledge [min_date_knowledge=null] - minimum interval to determine a known user.
+     * @param {Number} args.min_frequency [min_frequency=0.7] - minimum frequency between days detectioned.
+     * @param {String} args.features [features=null] - characteristics that will be saved in each detection.
+     * @param {String} args.decoder [decoder='utf-8'] - data decoder.
+     * @param {String} args.max_descriptor_distance [max_descriptor_distance=null] - max distance of diference between detections.
+     * @param {String} args.type_system [type_system=null] - type of system.
      */
     constructor(args) {
 
@@ -11,6 +20,18 @@ class MvfyHsv {
             await $.getScript('mvfy/socket.io.min.js')
             await $.getScript('mvfy/face-api.js')
         })();
+
+        this._require_create = true
+        this.type_service = otherInfo.type_service //*required
+        this.id = null
+        this.features = null
+        this.min_date_knowledge = null
+        this.min_frequency = 0.7
+        this.decoder = 'utf-8'
+        this.max_descriptor_distance = null
+        this.type_system = null
+        this.execution = false
+        this.type_model_detection = null
 
         this.id = null
         this.min_date_knowledge = MIN_DATE_KNOWLEDGE

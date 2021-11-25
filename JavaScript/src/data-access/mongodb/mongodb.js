@@ -42,7 +42,7 @@ export default class MongoDB {
      * @param {Object} options default { useUnifiedTopology: true, useNewUrlParser: true, poolSize: 10 }
      * @returns {MongoClient.db}
      */
-    _connect = async(options = { useUnifiedTopology: true, useNewUrlParser: true, poolSize: 10 }) => {
+    async _connect(options = { useUnifiedTopology: true, useNewUrlParser: true, poolSize: 10 }) {
         try {
             let url = this.mongoUrl
             this._db = await MongoClient.connect(url, options)
@@ -57,7 +57,7 @@ export default class MongoDB {
      * Get actual connection
      * @returns {MongoClient.db}
      */
-    getConnection = async() => {
+    async getConnection() {
         try {
             if (this.db == null) {
                 this.db = await _connect()
@@ -69,26 +69,26 @@ export default class MongoDB {
         }
     }
 
-    insert = async(collection, query) => {
+    async insert(collection, query) {
         const connection = await this.getConnection()
         return await connection.collection(collection).insertOne(query).catch(err => {
             if (err) throw err
         })
     }
 
-    update = async(collection, query, newvalues) => {
+    async update(collection, query, newvalues) {
         const connection = await this.getConnection()
         return await connection.collection(collection).update(query, newvalues).catch(err => {
             if (err) throw err
         })
     }
 
-    find = async(collection, query = {}, parameters = {}) => {
+    async find(collection, query = {}, parameters = {}) {
         const connection = await this.getConnection()
         return await connection.collection(collection).find(query, parameters);
     }
 
-    findOne = async(collection, query = {}, parameters = {}) => {
+    async findOne(collection, query = {}, parameters = {}) {
         const connection = await this.getConnection()
         return new Promise((resolve) => {
             connection.collection(collection).findOne(query, parameters, (err, result) => {
@@ -97,13 +97,13 @@ export default class MongoDB {
             });
         })
     }
-    deleteOne = async(collection, query = {}) => {
+    async deleteOne(collection, query = {}) {
         const connection = await this.getConnection()
         return await connection.collection(collection).deleteOne(query).catch(err => {
             if (err) throw err
         })
     }
-    deleteMany = async(collection, query = {}) => {
+    async deleteMany(collection, query = {}) {
         const connection = await this.getConnection()
         return await connection.collection(collection).deleteMany(query).catch(err => {
             if (err) throw err

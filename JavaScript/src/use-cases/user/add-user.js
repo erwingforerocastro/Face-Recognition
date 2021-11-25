@@ -9,7 +9,7 @@ export default function makeAddUser({ usersDB, makeUser }) {
             properties: user.getProperties(),
             init_date: user.getInitDate(),
             last_date: user.getLastDate(),
-            knowledge = user.getKnowledge(),
+            knowledge: user.getKnowledge(),
             frequency: user.getFrequency(),
             author: user.getAuthor(),
             created_on: user.getCreatedOn(),
