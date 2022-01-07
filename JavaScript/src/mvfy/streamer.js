@@ -1,4 +1,4 @@
-import cv from 'opencv4nodejs'
+import cv from 'opencv'
 import { REQUEST } from '../utils/constants'
 export default ({ io, interval, size = [300, 300] }) => {
     const wCap = new cv.VideoCapture(0)

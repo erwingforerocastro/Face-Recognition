@@ -73,7 +73,6 @@ const MONTHS = (quantity) => {
 export {
     UNKNOWS_URL,
     ACQUAINTANCES_URL,
-    MIN_DATE_KNOWLEDGE,
     MODELS_URL,
     CONFIG_URL,
     PORT,

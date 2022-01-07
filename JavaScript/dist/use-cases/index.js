@@ -1,74 +1,72 @@
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
-    value: true
+  value: true
 });
-exports.updateUser = exports.getUser = exports.getUsers = exports.addUser = exports.deleteSystem = exports.getSystem = exports.updateSystem = exports.addSystem = undefined;
+exports.updateUser = exports.updateSystem = exports.getUsers = exports.getUser = exports.getSystem = exports.deleteSystem = exports.addUser = exports.addSystem = void 0;
 
 var _entities = require("../../entities");
 
 var _index = require("../data-access/index");
 
-var _addSystem = require("./system/add-system");
+var _addSystem = _interopRequireDefault(require("./system/add-system"));
 
-var _addSystem2 = _interopRequireDefault(_addSystem);
+var _updateSystem = _interopRequireDefault(require("./system/update-system"));
 
-var _updateSystem = require("./system/update-system");
+var _deleteSystem = _interopRequireDefault(require("./system/delete-system"));
 
-var _updateSystem2 = _interopRequireDefault(_updateSystem);
+var _getSystem = _interopRequireDefault(require("./system/get-system"));
 
-var _deleteSystem = require("./system/delete-system");
+var _addUser = _interopRequireDefault(require("./user/add-user"));
 
-var _deleteSystem2 = _interopRequireDefault(_deleteSystem);
+var _getUsers = _interopRequireDefault(require("./user/get-users"));
 
-var _getSystem = require("./system/get-system");
+var _updateUser = _interopRequireDefault(require("./user/update-user"));
 
-var _getSystem2 = _interopRequireDefault(_getSystem);
-
-var _addUser = require("./user/add-user");
-
-var _addUser2 = _interopRequireDefault(_addUser);
-
-var _getUsers = require("./user/get-users");
-
-var _getUsers2 = _interopRequireDefault(_getUsers);
-
-var _updateUser = require("./user/update-user");
-
-var _updateUser2 = _interopRequireDefault(_updateUser);
-
-var _getUser = require("./user/get-user");
-
-var _getUser2 = _interopRequireDefault(_getUser);
+var _getUser = _interopRequireDefault(require("./user/get-user"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// System
-
-//user
-
-
+// entities
+// data access
 // same layer
 //system
-// entities
-const addSystem = (0, _addSystem2.default)({ systemsDB: _index.systemsDB, makeSystem: _entities.makeSystem });
-// data access
-
-const updateSystem = (0, _updateSystem2.default)({ systemsDB: _index.systemsDB, makeSystem: _entities.makeSystem });
-const deleteSystem = (0, _deleteSystem2.default)({ systemsDB: _index.systemsDB });
-const getSystem = (0, _getSystem2.default)({ systemsDB: _index.systemsDB });
-
-// User
-const addUser = (0, _addUser2.default)({ UserDB: _index.UserDB, makeUser: _entities.makeUser });
-const getUsers = (0, _getUsers2.default)({ UserDB: _index.UserDB });
-const getUser = (0, _getUser2.default)({ usersDB });
-const updateUser = (0, _updateUser2.default)({ usersDB, makeUser: _entities.makeUser });
-
+//user
+// System
+const addSystem = (0, _addSystem.default)({
+  systemsDB: _index.systemsDB,
+  makeSystem: _entities.makeSystem
+});
 exports.addSystem = addSystem;
+const updateSystem = (0, _updateSystem.default)({
+  systemsDB: _index.systemsDB,
+  makeSystem: _entities.makeSystem
+});
 exports.updateSystem = updateSystem;
-exports.getSystem = getSystem;
+const deleteSystem = (0, _deleteSystem.default)({
+  systemsDB: _index.systemsDB
+});
 exports.deleteSystem = deleteSystem;
+const getSystem = (0, _getSystem.default)({
+  systemsDB: _index.systemsDB
+}); // User
+
+exports.getSystem = getSystem;
+const addUser = (0, _addUser.default)({
+  UserDB: _index.UserDB,
+  makeUser: _entities.makeUser
+});
 exports.addUser = addUser;
+const getUsers = (0, _getUsers.default)({
+  UserDB: _index.UserDB
+});
 exports.getUsers = getUsers;
+const getUser = (0, _getUser.default)({
+  usersDB
+});
 exports.getUser = getUser;
+const updateUser = (0, _updateUser.default)({
+  usersDB,
+  makeUser: _entities.makeUser
+});
 exports.updateUser = updateUser;

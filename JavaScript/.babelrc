@@ -1,16 +1,15 @@
 {
   "presets": [
-    "stage-3",
     [
-      "env",
+      "@babel/preset-env",
       {
-        "esmodules": true,
         "targets": {
-          "browsers": [
-            "> 3%"
-          ]
+          "node": "current"
         }
       }
     ]
+  ],
+  "plugins": [
+    ["@babel/plugin-transform-runtime"]
   ]
 }

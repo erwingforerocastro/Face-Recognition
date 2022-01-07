@@ -10,6 +10,7 @@
     },
     "dependencies": {
         "@types/node": "^14.14.31",
+        "canvas": "^2.8.0",
         "cross-env": "^7.0.3",
         "express": "^4.17.1",
         "face-api.js": "^0.22.2",
@@ -19,8 +20,9 @@
         "moment": "^2.29.1",
         "mongodb": "^3.6.6",
         "node-fetch": "^2.6.1",
-        "node-sass": "^5.0.0",
+        "node-sass": "^7.0.1",
         "nodemon": "^2.0.12",
+        "opencv": "^7.0.0",
         "socket.io": "^4.1.2"
     },
     "scripts": {
@@ -31,11 +33,11 @@
         "start": "npm run build && node ./dist/index.js"
     },
     "devDependencies": {
-        "babel-cli": "^6.26.0",
-        "babel-core": "^6.26.3",
-        "babel-node": "0.0.1-security",
-        "babel-preset-env": "^1.7.0",
-        "babel-preset-stage-3": "^6.24.1",
+        "@babel/cli": "^7.16.0",
+        "@babel/core": "^7.16.5",
+        "@babel/node": "^7.16.5",
+        "@babel/plugin-transform-runtime": "^7.16.5",
+        "@babel/preset-env": "^7.16.5",
         "clang-format": "~1.2.2",
         "parcel-bundler": "^1.12.4",
         "rimraf": "^2.6.3",
