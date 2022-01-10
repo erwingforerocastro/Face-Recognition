@@ -1,22 +1,22 @@
 import path from 'path'
 
-
-const UNKNOWS_URL = path.join(__dirname, '/../unknows_url');
-const ACQUAINTANCES_URL = path.join(__dirname, '/../acquaintances_url');
-const MODELS_URL = path.join(__dirname, '/mvfy/models');
-const CONFIG_URL = path.join(__dirname, '/../config');
+const BASE_PROJECT = path.resolve(__dirname, '../..')
+const UNKNOWS_URL = path.join(BASE_PROJECT, '/unknows_url');
+const ACQUAINTANCES_URL = path.join(BASE_PROJECT, '/acquaintances_url');
+const MODELS_URL = path.join(BASE_PROJECT, '/src/mvfy/models');
+const CONFIG_URL = path.join(BASE_PROJECT, '/config');
 const PORT = process.env.PORT || 3000;
 
 //static
 const HTML_STREAMER = {
-    URL: path.join(__dirname, '/../public/streamer.html'),
+    URL: path.join(BASE_PROJECT, '/public/streamer.html'),
+    URL_TEMP: path.join(BASE_PROJECT, '/public/temp/_streamer.html'),
     PORT_REPLACE: '<<<PORT>>>',
     DOMAIN_REPLACE: '<<<DOMAIN>>>',
     EMIT_REPLACE: '<<<EMIT>>>',
 }
 
 //system
-
 const ALLOWED_FEATURES = {
     ALL: "all",
     AGE_AND_GENDER: "ageandgender",

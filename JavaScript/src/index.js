@@ -1,8 +1,8 @@
 /**
- * Priincipal index
+ * Principal index
  * @author: Erwing FC erwingforerocastro@gmail.com
  */
-// require('@tensorflow/tfjs - node');
+
 import express from 'express'
 import MvfyHsv from './mvfy/mvfy-hsv';
 import { PORT } from './utils/constants';
@@ -19,14 +19,13 @@ app.get('/', async function(req, res) {
 const server = require('http').Server(app);
 
 
-options = {
+let options = {
     cors: {
         origin: "*",
         methods: ["GET", "POST"]
     }
 }
 
-console.log(MvfyHsv)
 
 const hsv = new MvfyHsv({
     server: server,
@@ -47,7 +46,6 @@ const hsv = new MvfyHsv({
 // });
 
 hsv.start()
-
 
 server.listen(PORT, () => {
     console.log(`Listen Socket in port ${PORT}`);

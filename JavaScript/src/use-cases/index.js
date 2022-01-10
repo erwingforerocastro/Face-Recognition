@@ -2,7 +2,7 @@
 import {
     makeSystem,
     makeUser
-} from "../../entities";
+} from "../entities";
 // data access
 import {
     systemsDB,
@@ -31,8 +31,8 @@ const getSystem = MakeGetSystem({ systemsDB })
 // User
 const addUser = makeAddUser({ UserDB, makeUser })
 const getUsers = makeGetUsers({ UserDB })
-const getUser = makeGetUser({ usersDB })
-const updateUser = makeUpdateUser({ usersDB, makeUser })
+const getUser = makeGetUser({ UserDB })
+const updateUser = makeUpdateUser({ UserDB, makeUser })
 
 export {
     addSystem,

@@ -64,13 +64,13 @@ const replaceValues = (text, keys, values) => {
         throw new Error("keys and values has not same length")
     }
     keys.map((v, i) => {
-        tempText.replace(keys[i], values[i])
+        tempText = tempText.replace(keys[i], values[i])
     })
 
     return tempText
 }
 
-export default {
+export {
     convertString2Int,
     frecuency,
     replaceValues,

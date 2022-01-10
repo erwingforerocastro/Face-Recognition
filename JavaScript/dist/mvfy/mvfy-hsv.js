@@ -18,22 +18,18 @@
  * limitations under the License.
  * =============================================================================
  */
-'use strict';
+'use strict'; // import '@tensorflow/tfjs-node';
+// implements nodejs wrappers for HTMLCanvasElement, HTMLImageElement, ImageData
+// import * as canvas from 'canvas';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
 
-require("@tensorflow/tfjs-node");
-
-var canvas = _interopRequireWildcard(require("canvas"));
-
-var faceapi = _interopRequireWildcard(require("face-api.js"));
+var faceapi = _interopRequireWildcard(require("./face-api.js"));
 
 var utils = _interopRequireWildcard(require("../utils"));
-
-var _path = _interopRequireDefault(require("path"));
 
 var _fileSystem = _interopRequireDefault(require("file-system"));
 
@@ -55,7 +51,6 @@ function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "functio
 
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
-// implements nodejs wrappers for HTMLCanvasElement, HTMLImageElement, ImageData
 //constants
 class MvfyHsv {
   /**
@@ -457,7 +452,7 @@ class MvfyHsv {
         if (err) throw err;
       });
     });
-    res.sendFile(constants.HTML_STREAMER);
+    res.sendFile(constants.HTML_STREAMER.URL);
   }
 
 }

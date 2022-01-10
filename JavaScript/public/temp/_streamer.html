@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mvfy - Hsv</title>
+</head>
+
+<body>
+    <img id="image">
+    <script src="https://cdn.socket.io/socket.io-3.0.1.min.js"></script>
+    <script>
+        const socket = io.connect('http://localhost:undefined')
+        socket.on('undefined', (data) => {
+            const imageEl = document.getElementById("image");
+            imageEl.src = `data:image/jpeg;base64,${image}`;
+        })
+    </script>
+</body>
+
+</html>

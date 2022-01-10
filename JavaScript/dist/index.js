@@ -21,13 +21,12 @@ app.get('/', async function (req, res) {
 
 const server = require('http').Server(app);
 
-options = {
+let options = {
   cors: {
     origin: "*",
     methods: ["GET", "POST"]
   }
 };
-console.log(_mvfyHsv.default);
 const hsv = new _mvfyHsv.default({
   server: server,
   options: options,

@@ -24,15 +24,14 @@
 // import '@tensorflow/tfjs-node';
 // implements nodejs wrappers for HTMLCanvasElement, HTMLImageElement, ImageData
 // import * as canvas from 'canvas';
-import * as faceapi from 'face-api.js';
+import * as faceapi from './face-api.js';
 import * as utils from '../utils'
-import path from 'path';
 import fs from 'file-system'
 import stringify from 'fast-json-stable-stringify'
 import { StringDecoder } from 'string_decoder'
 import SocketIO from 'socket.io'
 import streamer from './streamer'
-
+import path from 'path';
 //constants
 import * as constants from "../utils/constants"
 
@@ -426,20 +425,20 @@ class MvfyHsv {
      */
     static async getStreamer(req, res) {
 
-        await fs.readFile(constants.HTML_STREAMER.URL, 'utf-8', async(err, data) => {
-            if (err) throw err;
+        let contentHtml = fs.readFileSync(constants.HTML_STREAMER.URL, 'utf-8')
+        let keys = [constants.HTML_STREAMER.PORT_REPLACE, constants.HTML_STREAMER.DOMAIN_REPLACE, constants.HTML_STREAMER.EMIT_REPLACE]
+        let values = [req.app.settings.port, req.hostname, constants.LOCAL_IMAGE_SEND]
+        let newData = utils.replaceValues(contentHtml, keys, values);
 
-            let keys = [constants.HTML_STREAMER.PORT_REPLACE, constants.HTML_STREAMER.DOMAIN_REPLACE, constants.HTML_STREAMER.EMIT_REPLACE]
-            let values = [req.app.settings.port, req.host, constants.LOCAL_IMAGE_SEND]
-
-            let newData = replaceValues(data, keys, values);
-
-            await fs.writeFile(constants.HTML_STREAMER.URL, newData, 'utf-8', function(err) {
-                if (err) throw err;
+        if (!fs.existsSync(path.dirname(constants.HTML_STREAMER.URL_TEMP))) {
+            fs.mkdirSync(path.dirname(constants.HTML_STREAMER.URL_TEMP), {
+                recursive: true
             });
-        });
+        }
 
-        res.sendFile(constants.HTML_STREAMER.URL)
+        fs.writeFileSync(constants.HTML_STREAMER.URL_TEMP, newData, { encoding: 'utf8' });
+
+        res.sendFile(constants.HTML_STREAMER.URL_TEMP)
     }
 }
 
