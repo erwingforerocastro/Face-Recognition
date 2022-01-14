@@ -40,7 +40,7 @@ export default function makeSystemDB({ client }) {
     }
 
     async function insert({ id: _id = Id.makeId(), ...systemInfo }) {
-        const result = await db.find(collection, { _id, ...systemInfo })
+        const result = await db.insert(collection, { _id, ...systemInfo })
         const { _id: id, ...insertedInfo } = result.ops[0]
         return { id, ...insertedInfo }
     }

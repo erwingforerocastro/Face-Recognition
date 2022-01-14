@@ -1,31 +1,31 @@
 export default function buildMakeSystem({ Id, validator, md5 }) {
     return function makeSystem({
         decoder,
-        typeService,
-        maxDescriptorDistance,
-        minDateKnowledge,
-        minFrequency = 0.7,
+        type_service,
+        max_descriptor_distance,
+        min_date_knowledge,
+        min_frequency,
         features,
-        typeSystem,
+        type_system,
         id = Id.makeId(),
-        title = title,
+        title,
         createdOn = Date.now(),
         modifiedOn = Date.now(),
     } = {}) {
 
         validator({
             decoder: decoder,
-            maxDescriptorDistance: maxDescriptorDistance,
-            minDateKnowledge: minDateKnowledge,
-            minFrequency: minFrequency,
+            max_descriptor_distance: max_descriptor_distance,
+            min_date_knowledge: min_date_knowledge,
+            min_frequency: min_frequency,
             features: features,
-            typeSystem: typeSystem,
-            typeService: typeService,
+            type_system: type_system,
+            type_service: type_service,
             title: title
         })
 
         function makeHash() {
-            return md5(`${title}${typeSystem}`)
+            return md5(`${title}${type_system}`)
         }
 
         if (!Id.isValidId(id)) {
@@ -35,12 +35,12 @@ export default function buildMakeSystem({ Id, validator, md5 }) {
         return Object.freeze({
             getId: () => id,
             getDecoder: () => decoder,
-            getTypeService: () => typeService,
-            geMaxDescriptorDistance: () => maxDescriptorDistance,
-            getMinDateKnowledge: () => minDateKnowledge,
-            getMinFrequency: () => minFrequency,
+            getTypeService: () => type_service,
+            geMaxDescriptorDistance: () => max_descriptor_distance,
+            getMinDateKnowledge: () => min_date_knowledge,
+            getMinFrequency: () => min_frequency,
             getFeatures: () => features,
-            getTypeSystem: () => typeSystem,
+            getTypeSystem: () => type_system,
             getCreateOn: () => createdOn,
             getModifiedOn: () => modifiedOn,
             getHash: () => makeHash()

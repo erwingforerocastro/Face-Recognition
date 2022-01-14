@@ -38,7 +38,7 @@ import * as constants from "../utils/constants"
 import {
     addSystem,
     addUser,
-    getSystems,
+    getSystem,
     getUser,
     getUsers,
     updateSystem,
@@ -113,13 +113,12 @@ class MvfyHsv {
             this._insert(system)
         }
 
-        if (this.type == constants.TYPE_SERVICE.LOCAL && this.id == null) {
+        if (this.type_service == constants.TYPE_SERVICE.LOCAL && this.id == null) {
             throw new Error("Required initialize system")
         }
 
         this.io.on('connection', (ws) => this.ws(ws))
-
-        if (this.type == constants.TYPE_SERVICE.LOCAL) {
+        if (this.type_service == constants.TYPE_SERVICE.LOCAL) {
             streamer({
                 io: this.io,
                 interval: Math.round(1000 / this._stream_fps)
@@ -166,8 +165,10 @@ class MvfyHsv {
         ({
             id: this.id = this.id,
             min_date_knowledge: this.min_date_knowledge = this.min_date_knowledge,
+            min_frequency: this.min_frequency = this.min_frequency,
             features: this.features = this.features,
             type_system: this.type_system = this.type_system,
+            type_service: this.type_service = this.type_service,
             type_model_detection: this.type_model_detection = this.type_model_detection,
             decoder: this.decoder = this.decoder,
             max_descriptor_distance: this.max_descriptor_distance = this.max_descriptor_distance,
@@ -426,8 +427,8 @@ class MvfyHsv {
     static async getStreamer(req, res) {
 
         let contentHtml = fs.readFileSync(constants.HTML_STREAMER.URL, 'utf-8')
-        let keys = [constants.HTML_STREAMER.PORT_REPLACE, constants.HTML_STREAMER.DOMAIN_REPLACE, constants.HTML_STREAMER.EMIT_REPLACE]
-        let values = [req.app.settings.port, req.hostname, constants.LOCAL_IMAGE_SEND]
+        let keys = [constants.HTML_STREAMER.PROTOCOL_REPLACE, constants.HTML_STREAMER.HOST_REPLACE, constants.HTML_STREAMER.EMIT_REPLACE]
+        let values = [req.protocol, `${req.get('host')}${req.originalUrl}`, constants.REQUEST.LOCAL_IMAGE_SEND]
         let newData = utils.replaceValues(contentHtml, keys, values);
 
         if (!fs.existsSync(path.dirname(constants.HTML_STREAMER.URL_TEMP))) {

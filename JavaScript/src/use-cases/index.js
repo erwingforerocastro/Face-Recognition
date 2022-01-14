@@ -25,8 +25,8 @@ import makeGetUser from "./user/get-user";
 // System
 const addSystem = makeAddSystem({ systemsDB, makeSystem })
 const updateSystem = makeUpdateSystem({ systemsDB, makeSystem })
+const getSystem = MakeGetSystem({ systemsDB, makeSystem })
 const deleteSystem = makeDeleteSystem({ systemsDB })
-const getSystem = MakeGetSystem({ systemsDB })
 
 // User
 const addUser = makeAddUser({ UserDB, makeUser })

@@ -22,19 +22,15 @@ function systemValidator(args = {}) {
                 throw new Error('decoder must be a string')
             }
         },
-        validate_maxDescriptorDistance: (distance) => {
+        validate_max_descriptor_distance: (distance) => {
             if (typeof(distance) !== "number" && (distance < 0 && distance > 1)) {
-                throw new Error('maxDescriptorDistance must be a number in range 0-1')
+                throw new Error('max_descriptor_distance must be a number in range 0-1')
             }
         },
-        validate_minDateKnowledge: (date) => {
-            if (typeof(date) !== 'string') {
-                throw new Error('minDateKnowledge must be a string')
-            }
-        },
-        validate_minFrequency: (frecuency) => {
-            if (typeof(frecuency) !== 'number' || (frecuency < 0 || frecuency > 1)) {
-                throw new Error('minFrequency must be a number between 0 and 1')
+        validate_min_date_knowledge: (date) => {
+            console.log(date)
+            if (typeof(date) !== typeof([])) {
+                throw new Error('min_date_knowledge must be a string')
             }
         },
         validate_features: (features) => {
@@ -42,12 +38,12 @@ function systemValidator(args = {}) {
                 throw new Error(`features must be a [String or Array], permissible: ${Object.values(ALLOWED_FEATURES).join(" or ")}`)
             }
         },
-        validate_typeSystem: (type_system) => {
+        validate_type_system: (type_system) => {
             if (typeof(type_system) === 'string' && Object.values(TYPE_SYSTEM).includes(type_system)) {
-                throw new Error(`typeSystem must be a string, permissible: ${Object.values(TYPE_SYSTEM).join(" or ")}`)
+                throw new Error(`type_system must be a string, permissible: ${Object.values(TYPE_SYSTEM).join(" or ")}`)
             }
         },
-        validate_typeService: (type_service) => {
+        validate_type_service: (type_service) => {
             if (typeof(features) !== 'string' && !Object.values(TYPE_SERVICE).includes(type_service)) {
                 throw new Error(`type_service must be a string, permissible: ${Object.values(TYPE_SERVICE).join(" or ")}`)
             }
@@ -71,14 +67,14 @@ function userValidator(args = {}) {
                 throw new Error('decoder must be a string')
             }
         },
-        validate_maxDescriptorDistance: (distance) => {
+        validate_max_descriptor_distance: (distance) => {
             if (typeof(distance) !== "number" && (distance < 0 && distance > 1)) {
-                throw new Error('maxDescriptorDistance must be a number in range 0-1')
+                throw new Error('max_descriptor_distance must be a number in range 0-1')
             }
         },
-        validate_minDateKnowledge: (date) => {
+        validate_min_date_knowledge: (date) => {
             if (typeof(date) !== 'string') {
-                throw new Error('minDateKnowledge must be a string')
+                throw new Error('min_date_knowledge must be a string')
             }
         },
         validate_features: (features) => {
@@ -86,12 +82,12 @@ function userValidator(args = {}) {
                 throw new Error(`features must be a [String or Array], permissible: ${Object.values(ALLOWED_FEATURES).join(" or ")}`)
             }
         },
-        validate_typeSystem: (type_system) => {
+        validate_type_system: (type_system) => {
             if (typeof(type_system) === 'string' && Object.values(TYPE_SYSTEM).includes(type_system)) {
-                throw new Error(`typeSystem must be a string, permissible: ${Object.values(TYPE_SYSTEM).join(" or ")}`)
+                throw new Error(`type_system must be a string, permissible: ${Object.values(TYPE_SYSTEM).join(" or ")}`)
             }
         },
-        validate_typeService: (type_service) => {
+        validate_type_service: (type_service) => {
             if (typeof(features) !== 'string' && !Object.values(TYPE_SERVICE).includes(type_service)) {
                 throw new Error(`type_service must be a string, permissible: ${Object.values(TYPE_SERVICE).join(" or ")}`)
             }

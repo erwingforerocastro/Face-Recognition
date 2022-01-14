@@ -5,15 +5,15 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js"></script>
     <title>Mvfy - Hsv</title>
 </head>
 
 <body>
     <img id="image">
-    <script src="https://cdn.socket.io/socket.io-3.0.1.min.js"></script>
     <script>
-        const socket = io.connect('http://localhost:undefined')
-        socket.on('undefined', (data) => {
+        const socket = io.connect('http://localhost:3000/')
+        socket.on('LOCAL_IMAGE_SEND', (data) => {
             const imageEl = document.getElementById("image");
             imageEl.src = `data:image/jpeg;base64,${image}`;
         })

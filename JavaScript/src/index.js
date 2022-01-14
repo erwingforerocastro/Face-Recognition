@@ -30,7 +30,7 @@ let options = {
 const hsv = new MvfyHsv({
     server: server,
     options: options,
-    type_service: MvfyHsv.const.TYPE_SERVICE.REMOTE,
+    type_service: MvfyHsv.const.TYPE_SERVICE.LOCAL,
     min_date_knowledge: MvfyHsv.const.WEEKS(1),
     features: MvfyHsv.const.ALLOWED_FEATURES.ALL,
     type_system: MvfyHsv.const.TYPE_SYSTEM.OPTIMIZED,

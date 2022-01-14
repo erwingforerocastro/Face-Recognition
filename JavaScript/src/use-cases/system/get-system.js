@@ -1,4 +1,4 @@
-export default function MakeGetSystem({ systemsDB }) {
+export default function MakeGetSystem({ systemsDB, makeSystem }) {
     return async function getSystem(systemInfo) {
         const system = makeSystem(systemInfo);
         return systemsDB.findByHash({

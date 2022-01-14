@@ -11,8 +11,8 @@ const PORT = process.env.PORT || 3000;
 const HTML_STREAMER = {
     URL: path.join(BASE_PROJECT, '/public/streamer.html'),
     URL_TEMP: path.join(BASE_PROJECT, '/public/temp/_streamer.html'),
-    PORT_REPLACE: '<<<PORT>>>',
-    DOMAIN_REPLACE: '<<<DOMAIN>>>',
+    PROTOCOL_REPLACE: '<<<PROTOCOL>>>',
+    HOST_REPLACE: '<<<HOST>>>',
     EMIT_REPLACE: '<<<EMIT>>>',
 }
 
