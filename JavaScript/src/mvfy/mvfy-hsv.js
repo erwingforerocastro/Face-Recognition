@@ -132,13 +132,15 @@ class MvfyHsv {
                         throw new Error("Required initialice system")
                     }
 
+                    console.log("Loading models..")
+                    await this.loadModels()
+
                     console.log("Creating streamer..")
                     streamer({
                         io: this.io,
-                        interval: Math.round(1000 / this._stream_fps)
+                        interval: Math.round(1000 / this._stream_fps),
+                        middleware: this.middlewareDetection(),
                     })
-                    console.log("Loading models..")
-                    await this.loadModels()
                 }
 
                 this.execution = true
@@ -146,6 +148,10 @@ class MvfyHsv {
                 console.log(error);
             }
         })();
+
+    }
+
+    async middlewareDetection() {
 
     }
 
@@ -286,6 +292,25 @@ class MvfyHsv {
 
 
         return new faceapi.FaceMatcher(labeledFaceDescriptors, this.max_descriptor_distance);
+
+    };
+
+    /**
+     * Lab
+     */
+    labelFaceDescriptors() {
+        if (this.matches) {
+            const labeledFaceDescriptors =
+                this.matches.map(match => {
+
+                    if (match.descriptor != null && match.label != null) {
+                        return new faceapi.LabeledFaceDescriptors(match.label, [new Float32Array(match.descriptor)]);
+                    }
+
+                })
+
+            this.faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, this.max_descriptor_distance);
+        }
 
     };
 

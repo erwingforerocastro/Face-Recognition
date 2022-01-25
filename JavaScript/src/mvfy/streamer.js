@@ -1,4 +1,4 @@
-import cv from '@techstark/opencv-js'
+import cv from 'opencv4nodejs'
 import { REQUEST, ACTION } from '../utils/constants'
 
 export default ({
@@ -13,6 +13,6 @@ export default ({
     setInterval(() => {
         const frame = wCap.read();
         const _image = cv.imencode('.jpg', frame).toString('base64')
-        io.emit(REQUEST.LOCAL_IMAGE_SEND, _image)
+        io.emit(ACTION.SET_LOCAL_DETECTION, _image)
     }, interval);
 }
