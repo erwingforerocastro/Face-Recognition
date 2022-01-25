@@ -11,10 +11,9 @@ export default function makeAddUser({ usersDB, makeUser }) {
             last_date: user.getLastDate(),
             knowledge: user.getKnowledge(),
             frequency: user.getFrequency(),
-            author: user.getAuthor(),
             created_on: user.getCreatedOn(),
             modified_on: user.getModifiedOn(),
-            id: user.getId()
+            _id: user.getId()
         })
     }
 }

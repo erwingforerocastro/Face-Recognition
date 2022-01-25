@@ -4,5 +4,9 @@ import buildMakeSystem from './system/system'
 import { systemValidator, md5 } from './utils'
 
 const makeUser = buildMakeUser({ Id })
-const makeSystem = buildMakeSystem({ Id, "validator": systemValidator, md5 })
+const makeSystem = buildMakeSystem({
+    "Id": Id,
+    "validator": systemValidator,
+    "md5": md5
+})
 export { makeUser, makeSystem }

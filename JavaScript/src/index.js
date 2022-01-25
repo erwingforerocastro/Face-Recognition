@@ -28,12 +28,13 @@ let options = {
 
 
 const hsv = new MvfyHsv({
+    title: "system_01",
     server: server,
     options: options,
+    type_system: MvfyHsv.const.TYPE_SYSTEM.OPTIMIZED,
     type_service: MvfyHsv.const.TYPE_SERVICE.LOCAL,
     min_date_knowledge: MvfyHsv.const.WEEKS(1),
     features: MvfyHsv.const.ALLOWED_FEATURES.ALL,
-    type_system: MvfyHsv.const.TYPE_SYSTEM.OPTIMIZED,
     decoder: "utf-8",
     max_descriptor_distance: 0.7
 });

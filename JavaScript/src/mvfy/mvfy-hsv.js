@@ -61,6 +61,7 @@ class MvfyHsv {
      * @param {String} args.decoder [decoder='utf-8'] - data decoder.
      * @param {String} args.max_descriptor_distance [max_descriptor_distance=null] - max distance of diference between detections.
      * @param {String} args.type_system [type_system=null] - type of system.
+     * @param {String} args.title [title=null] - title of system.
      */
     constructor(args = {}) {
 
@@ -71,6 +72,7 @@ class MvfyHsv {
         this.type_service = otherInfo.type_service //*required
         this.port = otherInfo.port
         this.domain = "localhost"
+        this.title = Math.floor(new Date() / 1000)
         this._stream_fps = 30
         this.id = null
         this.features = null
@@ -106,25 +108,45 @@ class MvfyHsv {
 
     /**
      * Init system in backend process
+     * WARNING - this function block the event loop
      */
-    async start() {
-        if (this._require_create) {
-            system = await this._create(this.values)
-            this._insert(system)
-        }
+    start() {
 
-        if (this.type_service == constants.TYPE_SERVICE.LOCAL && this.id == null) {
-            throw new Error("Required initialize system")
-        }
+        // console.log("WARNING - this function block the event loop")
 
-        this.io.on('connection', (ws) => this.ws(ws))
-        if (this.type_service == constants.TYPE_SERVICE.LOCAL) {
-            streamer({
-                io: this.io,
-                interval: Math.round(1000 / this._stream_fps)
-            })
-        }
-        this.execution = true
+        (async() => {
+            try {
+
+                console.log("Charging system..")
+
+                if (this._require_create) {
+                    let system = await this._create(this.values)
+                    this._insert(system)
+                }
+
+                console.log("conecting websocket..")
+                this.io.on('connection', (ws) => this.ws(ws))
+
+                if (this.type_service == constants.TYPE_SERVICE.LOCAL) {
+                    if (this.id == null) {
+                        throw new Error("Required initialice system")
+                    }
+
+                    console.log("Creating streamer..")
+                    streamer({
+                        io: this.io,
+                        interval: Math.round(1000 / this._stream_fps)
+                    })
+                    console.log("Loading models..")
+                    await this.loadModels()
+                }
+
+                this.execution = true
+            } catch (error) {
+                console.log(error);
+            }
+        })();
+
     }
 
     /**
@@ -135,6 +157,7 @@ class MvfyHsv {
     async _create(data) {
         let system = this.values
         const similarSystem = await getSystem(data)
+        console.log("create")
 
         if (similarSystem != null) {
             system = similarSystem
@@ -164,6 +187,7 @@ class MvfyHsv {
     _insert(system) {
         ({
             id: this.id = this.id,
+            title: this.title = this.title,
             min_date_knowledge: this.min_date_knowledge = this.min_date_knowledge,
             min_frequency: this.min_frequency = this.min_frequency,
             features: this.features = this.features,
@@ -187,64 +211,33 @@ class MvfyHsv {
             min_date_knowledge: this.min_date_knowledge,
             features: this.features,
             type_system: this.type_system,
+            type_service: this.type_service,
             type_model_detection: this.type_model_detection,
             decoder: this.decoder,
             max_descriptor_distance: this.max_descriptor_distance,
         };
     }
 
-
     /**
-     * Iniciar las configuraciones iniciales del sistema 
-     * @return {FaceMatcher}
-     *  
+     * Function for load models
      */
-    async preloadSystem() {
-        // validamos que el archivo exista
-        if (!fs.existsSync(MATCH_FILE)) {
+    async loadModels() {
 
-            fs.writeFileSync(MATCH_FILE, stringify({}), (err) => {
-                if (err) {
-                    throw new Error(`Error ${err}`);
-                }
-            })
-        }
-
-        let data = stringify(this)
-
-        //validamos el archivo de rostros
-        if (!fs.existsSync(CONFIG_FILE)) {
-
-            fs.writeFileSync(CONFIG_FILE, data, (err) => {
-                if (err) {
-                    throw new Error(`Error ${err}`);
-                }
-            })
-        }
-
-        await loadExternalModels(this.features, this.type_system)
-
-    }
-
-    /**
-     * Load models and initialize video
-     * @param {String} features variable con la caracteristica adicional a la predicción
-     * @param {String} type_system tipo de sistema optimo o preciso
-     */
-    async loadExternalModels(features, type_system) {
-        const url = constants.MODELS_URL;
+        let url = constants.MODELS_URL;
 
         try {
 
             await faceapi.loadFaceRecognitionModel(url)
 
-            if (type_system == 'optimized') {
+            if (this.type_system == 'optimized') {
                 await faceapi.nets.tinyFaceDetector.loadFromUri(url);
+                this.type_model_detection = 'TinyFaceDetectorOptions'
             } else {
                 await faceapi.nets.ssdMobilenetv1.loadFromUri(url);
+                this.type_model_detection = 'SsdMobilenetv1Options'
             }
 
-            let array_features = (Array.isArray(features)) ? features : [features]
+            let array_features = (Array.isArray(this.features)) ? this.features : [this.features]
 
             await faceapi.nets.faceLandmark68Net.loadFromUri(url)
 
@@ -261,7 +254,6 @@ class MvfyHsv {
         } catch (error) {
             throw new Error(`Error: ${error} `)
         }
-
     }
 
     /**
@@ -308,7 +300,7 @@ class MvfyHsv {
 
             let matches = getUsers({
                 query: {
-                    idSystem: system.id
+                    system_id: system.id
                 }
             })
 
@@ -337,13 +329,13 @@ class MvfyHsv {
      */
     async evaluateDetection(user) {
         let prevUser = user
-        let diffDate = utils.getDateDiffSoFar(user.init_date, this.values.min_date_knowledge[1] /** type of date see MvFyHsv.const  */ )
-        if (diffDate > this.values.min_date_knowledge[0] /**quantity of date's type */ && user.frequency >= this.values.frequency /**user's frequency is more bigger that system */ ) {
+        let diffDate = utils.getDateDiffSoFar(user.init_date, this.min_date_knowledge[1] /** type of date see MvFyHsv.const  */ )
+        if (diffDate > this.min_date_knowledge[0] /**quantity of date's type */ && user.frequency >= this.frequency /**user's frequency is more bigger that system */ ) {
             user.knowledge = true
-        } else if (utils.getDateDiffSoFar(user.last_date, this.values.min_date_knowledge[1], true) > 0) { // las date is other date's type (eje. days)
-            let prevDays = utils.frequency(this.values.min_date_knowledge[0], 1, this.frequency, true) // previous count of date's type (eje. days)
+        } else if (utils.getDateDiffSoFar(user.last_date, this.min_date_knowledge[1], true) > 0) { // las date is other date's type (eje. days)
+            let prevDays = utils.frequency(this.min_date_knowledge[0], 1, this.frequency, true) // previous count of date's type (eje. days)
             user.last_date = utils.getActualDate()
-            user.frequency = utils.frequency(this.values.min_date_knowledge[0], 1, prevDays + 1) // add this date's type (eje. days)
+            user.frequency = utils.frequency(this.min_date_knowledge[0], 1, prevDays + 1) // add this date's type (eje. days)
         }
 
         return (prevUser !== user) ? await updateUser({
@@ -363,7 +355,7 @@ class MvfyHsv {
             if (user.id != null && user.detection != null) {
                 let exist_user = await getUser({
                     query: {
-                        system_id: this.values.id,
+                        system_id: this.id,
                         detection: user.detection
                     }
                 })

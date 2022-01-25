@@ -1,5 +1,5 @@
 import cv from '@techstark/opencv-js'
-import { REQUEST } from '../utils/constants'
+import { REQUEST, ACTION } from '../utils/constants'
 
 export default ({
     io /** sockeio instance */ ,
@@ -13,7 +13,6 @@ export default ({
     setInterval(() => {
         const frame = wCap.read();
         const _image = cv.imencode('.jpg', frame).toString('base64')
-        console.log("sending image..")
         io.emit(REQUEST.LOCAL_IMAGE_SEND, _image)
     }, interval);
 }

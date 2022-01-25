@@ -5,10 +5,10 @@ export default function makeUpdateUser({ usersDB, makeUser }) {
             throw new Error('You must supply an id.')
         }
 
-        const user = makeUser({ id, ...changes });
+        const user = makeUser({ id: id, ...changes });
 
         return usersDB.update({
-            id: id,
+            _id: id,
             system_id: user.getSystemId(),
             author: user.getAuthor(),
             detection: user.getDetection(),
@@ -17,8 +17,6 @@ export default function makeUpdateUser({ usersDB, makeUser }) {
             last_date: user.getLastDate(),
             knowledge: user.getKnowledge(),
             frequency: user.getFrequency(),
-            author: user.getAuthor(),
-            created_on: user.getCreatedOn(),
             modified_on: user.getModifiedOn(),
             id: user.getId()
         })

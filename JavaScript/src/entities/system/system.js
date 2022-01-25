@@ -9,8 +9,8 @@ export default function buildMakeSystem({ Id, validator, md5 }) {
         type_system,
         id = Id.makeId(),
         title,
-        createdOn = Date.now(),
-        modifiedOn = Date.now(),
+        created_on = Date.now(),
+        modified_on = Date.now(),
     } = {}) {
 
         validator({
@@ -28,12 +28,17 @@ export default function buildMakeSystem({ Id, validator, md5 }) {
             return md5(`${title}${type_system}`)
         }
 
+        if (id == null) {
+            id = Id.makeId()
+        }
+
         if (!Id.isValidId(id)) {
             throw new Error('System must have a valid id.')
         }
 
         return Object.freeze({
             getId: () => id,
+            getTitle: () => title,
             getDecoder: () => decoder,
             getTypeService: () => type_service,
             geMaxDescriptorDistance: () => max_descriptor_distance,
@@ -41,8 +46,8 @@ export default function buildMakeSystem({ Id, validator, md5 }) {
             getMinFrequency: () => min_frequency,
             getFeatures: () => features,
             getTypeSystem: () => type_system,
-            getCreateOn: () => createdOn,
-            getModifiedOn: () => modifiedOn,
+            getCreatedOn: () => created_on,
+            getModifiedOn: () => modified_on,
             getHash: () => makeHash()
         })
     }

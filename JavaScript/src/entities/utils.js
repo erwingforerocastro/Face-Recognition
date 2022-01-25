@@ -28,7 +28,6 @@ function systemValidator(args = {}) {
             }
         },
         validate_min_date_knowledge: (date) => {
-            console.log(date)
             if (typeof(date) !== typeof([])) {
                 throw new Error('min_date_knowledge must be a string')
             }
@@ -39,12 +38,12 @@ function systemValidator(args = {}) {
             }
         },
         validate_type_system: (type_system) => {
-            if (typeof(type_system) === 'string' && Object.values(TYPE_SYSTEM).includes(type_system)) {
+            if (typeof(type_system) !== 'string' && !Object.values(TYPE_SYSTEM).includes(type_system)) {
                 throw new Error(`type_system must be a string, permissible: ${Object.values(TYPE_SYSTEM).join(" or ")}`)
             }
         },
         validate_type_service: (type_service) => {
-            if (typeof(features) !== 'string' && !Object.values(TYPE_SERVICE).includes(type_service)) {
+            if (typeof(type_service) !== 'string' && !Object.values(TYPE_SERVICE).includes(type_service)) {
                 throw new Error(`type_service must be a string, permissible: ${Object.values(TYPE_SERVICE).join(" or ")}`)
             }
 
