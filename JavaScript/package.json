@@ -9,7 +9,6 @@
         "node": ">=8.9.0"
     },
     "dependencies": {
-        "@techstark/opencv-js": "^4.5.4-release.1",
         "@types/node": "^14.14.31",
         "canvas": "^2.9.0",
         "cross-env": "^7.0.3",
@@ -43,5 +42,6 @@
         "parcel-bundler": "^1.12.4",
         "rimraf": "^2.6.3",
         "yalc": "~1.0.0-pre.22"
-    }
+    },
+    "sourceMaps": true
 }

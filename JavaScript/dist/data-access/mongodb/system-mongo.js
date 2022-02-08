@@ -83,7 +83,7 @@ function makeSystemDB({
     id: _id = _Id.default.makeId(),
     ...systemInfo
   }) {
-    const result = await db.find(collection, {
+    const result = await db.insert(collection, {
       _id,
       ...systemInfo
     });

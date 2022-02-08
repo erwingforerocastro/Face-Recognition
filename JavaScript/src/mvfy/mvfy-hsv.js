@@ -83,7 +83,10 @@ class MvfyHsv {
         this.type_system = null
         this.execution = false
         this.type_model_detection = null
-
+        this.display_size = { width: 300, height: 300 }
+        this.matches = null
+        this.stream_video = null
+        this.interval_streaming = null
         this._insert(otherInfo)
 
         if (server == null || options == null) {
@@ -136,10 +139,10 @@ class MvfyHsv {
                     await this.loadModels()
 
                     console.log("Creating streamer..")
-                    streamer({
+                    this.interval_streaming = streamer({
                         io: this.io,
                         interval: Math.round(1000 / this._stream_fps),
-                        middleware: this.middlewareDetection(),
+                        middleware: this.middlewareDetection,
                     })
                 }
 
@@ -151,7 +154,66 @@ class MvfyHsv {
 
     }
 
-    async middlewareDetection() {
+    streamer() {
+
+        const wCap = new cv.VideoCapture(0)
+        const interval = Math.round(1000 / this._stream_fps)
+        wCap.set(cv.CAP_PROP_FRAME_WIDTH, this.display_size[0])
+        wCap.set(cv.CAP_PROP_FRAME_HEIGHT, this.display_size[1])
+        console.log("capture")
+
+        this.interval_streaming = setInterval(async() => {
+            const frame = wCap.read();
+            let process_frame = await this.middleware(frame)
+            const _image = cv.imencode('.jpg', process_frame).toString('base64')
+            this.io.emit(ACTION.SEND_IMAGE_CLIENT, _image)
+        }, interval);
+    }
+
+    async middlewareDetection(img) {
+        if (this.stream_video == null) {
+            this.stream_video = faceapi.createCanvas();
+            faceapi.matchDimensions(this.stream_video, this.display_size)
+        }
+
+        let detections = await this.loadDetectionsAndFeatures(img);
+        this.stream_video.getContext('2d').clearRect(0, 0, this.stream_video.width, this.stream_video.height);
+
+        if (detections) {
+            detections.map(detection => {
+                console.log(detection)
+
+                let resizedDetection = faceapi.resizeResults(detection, this.display_size)
+
+                console.log(this.faceMatcher)
+                if (this.faceMatcher) {
+                    let results = this.faceMatcher.findBestMatch(resizedDetection.descriptor)
+                    let drawoptions = {}
+                    if (results == null) {
+                        drawoptions = {
+                            label: 'Desconocido',
+                            lineWidth: 2,
+                            boxColor: 'red',
+                            drawLabelOptions: { fontStyle: 'Roboto' }
+                        }
+
+                    } else {
+                        drawoptions = {
+                            label: `Conocido`,
+                            lineWidth: 2,
+                            boxColor: 'green',
+                            drawLabelOptions: { fontStyle: 'Roboto' }
+                        }
+                    }
+                    new faceapi.draw.DrawBox(resizedDetection.detection.box, drawoptions).draw(this.stream_video)
+                } else {
+                    throw new Error("faceMatcher not found")
+                }
+
+            })
+        }
+
+        return this.stream_video
 
     }
 
@@ -265,17 +327,24 @@ class MvfyHsv {
     /**
      * Detect faces and tag them
      * @param {String} route ruta de guardado de las imagenes
-     * @param {Array} labels nombre u etiqueta de las imagenes de los usuarios
+     * @param {Array} labels is the same name of file
      * @return {FaceMatcher}
      *  
      */
-    async labelsMatchers(route, labels) {
+    async insertLabelsMatchersImages(route, labels, filter) {
+
+        if (labels == null || labels == []) {
+            labels = await fs.readdir(route)
+            if (filter) {
+                labels = labels.filter(filter)
+            }
+        }
 
         const labeledFaceDescriptors = await Promise.all(
             labels.map(async(label, index) => {
 
                 // convertir en un HTMLImageElement
-                const imgUrl = `${route}/${label}` || `${route}${label}`;
+                const imgUrl = path.normalize(path.join());
                 const img = await face_api.fetchImage(imgUrl);
 
                 // detecta la cara con la puntuación más alta en la imagen 
@@ -296,7 +365,7 @@ class MvfyHsv {
     };
 
     /**
-     * Lab
+     * Label face descriptors
      */
     labelFaceDescriptors() {
         if (this.matches) {
@@ -312,7 +381,36 @@ class MvfyHsv {
             this.faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, this.max_descriptor_distance);
         }
 
-    };
+    }
+
+    /**
+     * load detections and features of image
+     * @param img actual canvas image
+     */
+    loadDetectionsAndFeatures(img) {
+
+        if (img !== null) {
+            let detections = faceapi.detectAllFaces(img, new faceapi[`${this.type_model_detection}`]()).withFaceLandmarks().withFaceDescriptors()
+
+            let array_features = (Array.isArray(this.features)) ? this.features : [this.features]
+
+            array_features.forEach(v => {
+                if (v == 'all') {
+                    detections = detections.withAgeAndGender().withFaceExpressions()
+                } else if (v == 'ageandgender') {
+                    detections = detections.withAgeAndGender()
+                } else if (v == 'expressions') {
+                    detections = detections.withFaceExpressions()
+                }
+            })
+
+            return detections
+
+        } else {
+            console.error('img canvas not found')
+        }
+
+    }
 
     /**
      * Function for init the system

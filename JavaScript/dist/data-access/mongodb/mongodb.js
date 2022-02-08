@@ -25,12 +25,9 @@ class MongoDB {
      MONGO_DB,
    * }
    */
-  constructor({
-    url,
-    ...properties
-  } = {}) {
-    if (url) {
-      this.mongoUrl = url;
+  constructor(properties = {}) {
+    if (properties.url) {
+      this.mongoUrl = properties.url;
     } else {
       ({
         MONGO_USERNAME: this.MONGO_USERNAME = "root",
@@ -59,8 +56,7 @@ class MongoDB {
     try {
       let url = this.mongoUrl;
       this._db = await MongoClient.connect(url, options);
-      db = this._db;
-      return _db.db();
+      return this._db.db();
     } catch (e) {
       return e;
     }
@@ -74,8 +70,8 @@ class MongoDB {
   async getConnection() {
     try {
       if (this.db == null) {
-        this.db = await _connect();
-        console.log('Connected', this.db);
+        this.db = await this._connect();
+        console.log('Connected', this.mongoUrl);
       }
 
       return this.db;
@@ -105,11 +101,8 @@ class MongoDB {
 
   async findOne(collection, query = {}, parameters = {}) {
     const connection = await this.getConnection();
-    return new Promise(resolve => {
-      connection.collection(collection).findOne(query, parameters, (err, result) => {
-        if (err) throw err;
-        resolve(result);
-      });
+    return await connection.collection(collection).findOne(query, parameters).catch(err => {
+      if (err) throw err;
     });
   }
 

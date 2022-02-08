@@ -41,6 +41,8 @@ var _socket = _interopRequireDefault(require("socket.io"));
 
 var _streamer = _interopRequireDefault(require("./streamer"));
 
+var _path = _interopRequireDefault(require("path"));
+
 var constants = _interopRequireWildcard(require("../utils/constants"));
 
 var _index = require("../use-cases/index");
@@ -67,6 +69,7 @@ class MvfyHsv {
    * @param {String} args.decoder [decoder='utf-8'] - data decoder.
    * @param {String} args.max_descriptor_distance [max_descriptor_distance=null] - max distance of diference between detections.
    * @param {String} args.type_system [type_system=null] - type of system.
+   * @param {String} args.title [title=null] - title of system.
    */
   constructor(args = {}) {
     let {
@@ -80,6 +83,7 @@ class MvfyHsv {
 
     this.port = otherInfo.port;
     this.domain = "localhost";
+    this.title = Math.floor(new Date() / 1000);
     this._stream_fps = 30;
     this.id = null;
     this.features = null;
@@ -90,6 +94,12 @@ class MvfyHsv {
     this.type_system = null;
     this.execution = false;
     this.type_model_detection = null;
+    this.display_size = {
+      width: 300,
+      height: 300
+    };
+    this.matches = null;
+    this.stream_video = null;
 
     this._insert(otherInfo);
 
@@ -114,30 +124,94 @@ class MvfyHsv {
   }
   /**
    * Init system in backend process
+   * WARNING - this function block the event loop
    */
 
 
-  async start() {
-    if (this._require_create) {
-      system = await this._create(this.values);
+  start() {
+    // console.log("WARNING - this function block the event loop")
+    (async () => {
+      try {
+        console.log("Charging system..");
 
-      this._insert(system);
+        if (this._require_create) {
+          let system = await this._create(this.values);
+
+          this._insert(system);
+        }
+
+        console.log("conecting websocket..");
+        this.io.on('connection', ws => this.ws(ws));
+
+        if (this.type_service == constants.TYPE_SERVICE.LOCAL) {
+          if (this.id == null) {
+            throw new Error("Required initialice system");
+          }
+
+          console.log("Loading models..");
+          await this.loadModels();
+          console.log("Creating streamer..");
+          (0, _streamer.default)({
+            io: this.io,
+            interval: Math.round(1000 / this._stream_fps),
+            middleware: this.middlewareDetection
+          });
+        }
+
+        this.execution = true;
+      } catch (error) {
+        console.log(error);
+      }
+    })();
+  }
+
+  async middlewareDetection(img) {
+    if (this.stream_video == null) {
+      this.stream_video = faceapi.createCanvas();
+      faceapi.matchDimensions(this.stream_video, this.display_size);
     }
 
-    if (this.type == constants.TYPE_SERVICE.LOCAL && this.id == null) {
-      throw new Error("Required initialize system");
-    }
+    let detections = await this.loadDetectionsAndFeatures(img);
+    this.stream_video.getContext('2d').clearRect(0, 0, this.stream_video.width, this.stream_video.height);
 
-    this.io.on('connection', ws => this.ws(ws));
+    if (detections) {
+      detections.map(detection => {
+        console.log(detection);
+        let resizedDetection = faceapi.resizeResults(detection, this.display_size);
+        console.log(this.faceMatcher);
 
-    if (this.type == constants.TYPE_SERVICE.LOCAL) {
-      (0, _streamer.default)({
-        io: this.io,
-        interval: Math.round(1000 / this._stream_fps)
+        if (this.faceMatcher) {
+          let results = this.faceMatcher.findBestMatch(resizedDetection.descriptor);
+          let drawoptions = {};
+
+          if (results == null) {
+            drawoptions = {
+              label: 'Desconocido',
+              lineWidth: 2,
+              boxColor: 'red',
+              drawLabelOptions: {
+                fontStyle: 'Roboto'
+              }
+            };
+          } else {
+            drawoptions = {
+              label: `Conocido`,
+              lineWidth: 2,
+              boxColor: 'green',
+              drawLabelOptions: {
+                fontStyle: 'Roboto'
+              }
+            };
+          }
+
+          new faceapi.draw.DrawBox(resizedDetection.detection.box, drawoptions).draw(this.stream_video);
+        } else {
+          throw new Error("faceMatcher not found");
+        }
       });
     }
 
-    this.execution = true;
+    return this.stream_video;
   }
   /**
    * Create system
@@ -148,7 +222,8 @@ class MvfyHsv {
 
   async _create(data) {
     let system = this.values;
-    const similarSystem = await getSystem(data);
+    const similarSystem = await (0, _index.getSystem)(data);
+    console.log("create");
 
     if (similarSystem != null) {
       system = similarSystem;
@@ -184,9 +259,12 @@ class MvfyHsv {
   _insert(system) {
     ({
       id: this.id = this.id,
+      title: this.title = this.title,
       min_date_knowledge: this.min_date_knowledge = this.min_date_knowledge,
+      min_frequency: this.min_frequency = this.min_frequency,
       features: this.features = this.features,
       type_system: this.type_system = this.type_system,
+      type_service: this.type_service = this.type_service,
       type_model_detection: this.type_model_detection = this.type_model_detection,
       decoder: this.decoder = this.decoder,
       max_descriptor_distance: this.max_descriptor_distance = this.max_descriptor_distance
@@ -204,60 +282,32 @@ class MvfyHsv {
       min_date_knowledge: this.min_date_knowledge,
       features: this.features,
       type_system: this.type_system,
+      type_service: this.type_service,
       type_model_detection: this.type_model_detection,
       decoder: this.decoder,
       max_descriptor_distance: this.max_descriptor_distance
     };
   }
   /**
-   * Iniciar las configuraciones iniciales del sistema 
-   * @return {FaceMatcher}
-   *  
+   * Function for load models
    */
 
 
-  async preloadSystem() {
-    // validamos que el archivo exista
-    if (!_fileSystem.default.existsSync(MATCH_FILE)) {
-      _fileSystem.default.writeFileSync(MATCH_FILE, (0, _fastJsonStableStringify.default)({}), err => {
-        if (err) {
-          throw new Error(`Error ${err}`);
-        }
-      });
-    }
-
-    let data = (0, _fastJsonStableStringify.default)(this); //validamos el archivo de rostros
-
-    if (!_fileSystem.default.existsSync(CONFIG_FILE)) {
-      _fileSystem.default.writeFileSync(CONFIG_FILE, data, err => {
-        if (err) {
-          throw new Error(`Error ${err}`);
-        }
-      });
-    }
-
-    await loadExternalModels(this.features, this.type_system);
-  }
-  /**
-   * Load models and initialize video
-   * @param {String} features variable con la caracteristica adicional a la predicción
-   * @param {String} type_system tipo de sistema optimo o preciso
-   */
-
-
-  async loadExternalModels(features, type_system) {
-    const url = constants.MODELS_URL;
+  async loadModels() {
+    let url = constants.MODELS_URL;
 
     try {
       await faceapi.loadFaceRecognitionModel(url);
 
-      if (type_system == 'optimized') {
+      if (this.type_system == 'optimized') {
         await faceapi.nets.tinyFaceDetector.loadFromUri(url);
+        this.type_model_detection = 'TinyFaceDetectorOptions';
       } else {
         await faceapi.nets.ssdMobilenetv1.loadFromUri(url);
+        this.type_model_detection = 'SsdMobilenetv1Options';
       }
 
-      let array_features = Array.isArray(features) ? features : [features];
+      let array_features = Array.isArray(this.features) ? this.features : [this.features];
       await faceapi.nets.faceLandmark68Net.loadFromUri(url);
       array_features.forEach(async v => {
         if (v == 'all') {
@@ -276,16 +326,25 @@ class MvfyHsv {
   /**
    * Detect faces and tag them
    * @param {String} route ruta de guardado de las imagenes
-   * @param {Array} labels nombre u etiqueta de las imagenes de los usuarios
+   * @param {Array} labels is the same name of file
    * @return {FaceMatcher}
    *  
    */
 
 
-  async labelsMatchers(route, labels) {
+  async insertLabelsMatchersImages(route, labels, filter) {
+    if (labels == null || labels == []) {
+      labels = await _fileSystem.default.readdir(route);
+
+      if (filter) {
+        labels = labels.filter(filter);
+      }
+    }
+
     const labeledFaceDescriptors = await Promise.all(labels.map(async (label, index) => {
       // convertir en un HTMLImageElement
-      const imgUrl = `${route}/${label}` || `${route}${label}`;
+      const imgUrl = _path.default.normalize(_path.default.join());
+
       const img = await face_api.fetchImage(imgUrl); // detecta la cara con la puntuación más alta en la imagen 
       //y calcula sus puntos de referencia y el descriptor de la cara
 
@@ -302,9 +361,48 @@ class MvfyHsv {
   }
 
   /**
+   * Label face descriptors
+   */
+  labelFaceDescriptors() {
+    if (this.matches) {
+      const labeledFaceDescriptors = this.matches.map(match => {
+        if (match.descriptor != null && match.label != null) {
+          return new faceapi.LabeledFaceDescriptors(match.label, [new Float32Array(match.descriptor)]);
+        }
+      });
+      this.faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, this.max_descriptor_distance);
+    }
+  }
+  /**
+   * load detections and features of image
+   * @param img actual canvas image
+   */
+
+
+  loadDetectionsAndFeatures(img) {
+    if (img !== null) {
+      let detections = faceapi.detectAllFaces(img, new faceapi[`${this.type_model_detection}`]()).withFaceLandmarks().withFaceDescriptors();
+      let array_features = Array.isArray(this.features) ? this.features : [this.features];
+      array_features.forEach(v => {
+        if (v == 'all') {
+          detections = detections.withAgeAndGender().withFaceExpressions();
+        } else if (v == 'ageandgender') {
+          detections = detections.withAgeAndGender();
+        } else if (v == 'expressions') {
+          detections = detections.withFaceExpressions();
+        }
+      });
+      return detections;
+    } else {
+      console.error('img canvas not found');
+    }
+  }
+  /**
    * Function for init the system
    * @param {Object} data 
    */
+
+
   async initSystem(data) {
     try {
       let system = await this._create(data);
@@ -313,7 +411,7 @@ class MvfyHsv {
 
       let matches = (0, _index.getUsers)({
         query: {
-          idSystem: system.id
+          system_id: system.id
         }
       });
       matches = matches != null ? matches : [];
@@ -341,22 +439,22 @@ class MvfyHsv {
 
   async evaluateDetection(user) {
     let prevUser = user;
-    let diffDate = utils.getDateDiffSoFar(user.init_date, this.values.min_date_knowledge[1]
+    let diffDate = utils.getDateDiffSoFar(user.init_date, this.min_date_knowledge[1]
     /** type of date see MvFyHsv.const  */
     );
 
-    if (diffDate > this.values.min_date_knowledge[0]
+    if (diffDate > this.min_date_knowledge[0]
     /**quantity of date's type */
-    && user.frequency >= this.values.frequency
+    && user.frequency >= this.frequency
     /**user's frequency is more bigger that system */
     ) {
       user.knowledge = true;
-    } else if (utils.getDateDiffSoFar(user.last_date, this.values.min_date_knowledge[1], true) > 0) {
+    } else if (utils.getDateDiffSoFar(user.last_date, this.min_date_knowledge[1], true) > 0) {
       // las date is other date's type (eje. days)
-      let prevDays = utils.frequency(this.values.min_date_knowledge[0], 1, this.frequency, true); // previous count of date's type (eje. days)
+      let prevDays = utils.frequency(this.min_date_knowledge[0], 1, this.frequency, true); // previous count of date's type (eje. days)
 
       user.last_date = utils.getActualDate();
-      user.frequency = utils.frequency(this.values.min_date_knowledge[0], 1, prevDays + 1); // add this date's type (eje. days)
+      user.frequency = utils.frequency(this.min_date_knowledge[0], 1, prevDays + 1); // add this date's type (eje. days)
     }
 
     return prevUser !== user ? await (0, _index.updateUser)({ ...user,
@@ -376,7 +474,7 @@ class MvfyHsv {
       if (user.id != null && user.detection != null) {
         let exist_user = await (0, _index.getUser)({
           query: {
-            system_id: this.values.id,
+            system_id: this.id,
             detection: user.detection
           }
         });
@@ -443,16 +541,23 @@ class MvfyHsv {
 
 
   static async getStreamer(req, res) {
-    await _fileSystem.default.readFile(constants.HTML_STREAMER.URL, 'utf-8', async (err, data) => {
-      if (err) throw err;
-      let keys = [constants.HTML_STREAMER.PORT_REPLACE, constants.HTML_STREAMER.DOMAIN_REPLACE, constants.HTML_STREAMER.EMIT_REPLACE];
-      let values = [req.app.settings.port, req.host, constants.LOCAL_IMAGE_SEND];
-      let newData = replaceValues(data, keys, values);
-      await _fileSystem.default.writeFile(constants.HTML_STREAMER.URL, newData, 'utf-8', function (err) {
-        if (err) throw err;
+    let contentHtml = _fileSystem.default.readFileSync(constants.HTML_STREAMER.URL, 'utf-8');
+
+    let keys = [constants.HTML_STREAMER.PROTOCOL_REPLACE, constants.HTML_STREAMER.HOST_REPLACE, constants.HTML_STREAMER.EMIT_REPLACE];
+    let values = [req.protocol, `${req.get('host')}${req.originalUrl}`, constants.REQUEST.LOCAL_IMAGE_SEND];
+    let newData = utils.replaceValues(contentHtml, keys, values);
+
+    if (!_fileSystem.default.existsSync(_path.default.dirname(constants.HTML_STREAMER.URL_TEMP))) {
+      _fileSystem.default.mkdirSync(_path.default.dirname(constants.HTML_STREAMER.URL_TEMP), {
+        recursive: true
       });
+    }
+
+    _fileSystem.default.writeFileSync(constants.HTML_STREAMER.URL_TEMP, newData, {
+      encoding: 'utf8'
     });
-    res.sendFile(constants.HTML_STREAMER.URL);
+
+    res.sendFile(constants.HTML_STREAMER.URL_TEMP);
   }
 
 }

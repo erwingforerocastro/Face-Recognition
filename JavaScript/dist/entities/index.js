@@ -20,8 +20,8 @@ const makeUser = (0, _user.default)({
 });
 exports.makeUser = makeUser;
 const makeSystem = (0, _system.default)({
-  Id: _Id.default,
-  systemValidator: _utils.systemValidator,
-  md5: _utils.md5
+  "Id": _Id.default,
+  "validator": _utils.systemValidator,
+  "md5": _utils.md5
 });
 exports.makeSystem = makeSystem;

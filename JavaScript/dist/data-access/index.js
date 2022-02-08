@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.UserDB = exports.SystemDB = void 0;
+exports.systemsDB = exports.UserDB = void 0;
 
 var _systemMongo = _interopRequireDefault(require("./mongodb/system-mongo"));
 
@@ -11,22 +11,23 @@ var _userMongo = _interopRequireDefault(require("./mongodb/user-mongo"));
 
 var _mongodb = _interopRequireDefault(require("./mongodb/mongodb"));
 
+var _config = _interopRequireDefault(require("../config"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const env = process.env;
-const properties = {
-  url: env.MVFY_MONGOURL || "",
-  MONGO_USERNAME: env.MVFY_MONGO_USERNAME || "",
-  MONGO_PASSWORD: env.MVFY_MONGO_PASSWORD || "",
-  MONGO_HOSTNAME: env.MVFY_MONGO_HOSTNAME || "",
-  MONGO_PORT: env.MVFY_MONGO_PORT || "",
-  MONGO_DB: env.MVFY_MONGO_DB || ""
+var properties = {
+  url: _config.default.url,
+  MONGO_USERNAME: _config.default.MONGO_USERNAME,
+  MONGO_PASSWORD: _config.default.MONGO_PASSWORD,
+  MONGO_HOSTNAME: _config.default.MONGO_HOSTNAME,
+  MONGO_PORT: _config.default.MONGO_PORT,
+  MONGO_DB: _config.default.MONGO_DB
 };
 const client = new _mongodb.default(properties);
-const SystemDB = (0, _systemMongo.default)({
+const systemsDB = (0, _systemMongo.default)({
   client
 });
-exports.SystemDB = SystemDB;
+exports.systemsDB = systemsDB;
 const UserDB = (0, _userMongo.default)({
   client
 });
