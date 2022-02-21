@@ -14,7 +14,7 @@ export default ({
     return setInterval(() => {
             const frame = wCap.read();
             let process_frame = middleware(frame)
-            const _image = cv.imencode('.jpg', frame).toString('base64')
+            const _image = cv.imencode('.jpg', process_frame).toString('base64')
             io.emit(ACTION.SET_LOCAL_DETECTION, _image)
         },
         interval);

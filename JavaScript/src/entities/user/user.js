@@ -4,7 +4,7 @@ export default function buildMakeUser({ Id }) {
         systemId,
         author,
         detection,
-        properties,
+        properties = {},
         initDate,
         lastDate,
         knowledge = false,
@@ -12,6 +12,7 @@ export default function buildMakeUser({ Id }) {
         createdOn = Date.now(),
         modifiedOn = Date.now(),
     } = {}) {
+
         if (!Id.isValidId(id)) {
             throw new Error('User must have a valid id.')
         }

@@ -135,15 +135,14 @@ class MvfyHsv {
                         throw new Error("Required initialice system")
                     }
 
+                    console.log("Loading matches..")
+                    await this.loadMatches()
+
                     console.log("Loading models..")
                     await this.loadModels()
 
                     console.log("Creating streamer..")
-                    this.interval_streaming = streamer({
-                        io: this.io,
-                        interval: Math.round(1000 / this._stream_fps),
-                        middleware: this.middlewareDetection,
-                    })
+                    await this.streaming()
                 }
 
                 this.execution = true
@@ -151,69 +150,6 @@ class MvfyHsv {
                 console.log(error);
             }
         })();
-
-    }
-
-    streamer() {
-
-        const wCap = new cv.VideoCapture(0)
-        const interval = Math.round(1000 / this._stream_fps)
-        wCap.set(cv.CAP_PROP_FRAME_WIDTH, this.display_size[0])
-        wCap.set(cv.CAP_PROP_FRAME_HEIGHT, this.display_size[1])
-        console.log("capture")
-
-        this.interval_streaming = setInterval(async() => {
-            const frame = wCap.read();
-            let process_frame = await this.middleware(frame)
-            const _image = cv.imencode('.jpg', process_frame).toString('base64')
-            this.io.emit(ACTION.SEND_IMAGE_CLIENT, _image)
-        }, interval);
-    }
-
-    async middlewareDetection(img) {
-        if (this.stream_video == null) {
-            this.stream_video = faceapi.createCanvas();
-            faceapi.matchDimensions(this.stream_video, this.display_size)
-        }
-
-        let detections = await this.loadDetectionsAndFeatures(img);
-        this.stream_video.getContext('2d').clearRect(0, 0, this.stream_video.width, this.stream_video.height);
-
-        if (detections) {
-            detections.map(detection => {
-                console.log(detection)
-
-                let resizedDetection = faceapi.resizeResults(detection, this.display_size)
-
-                console.log(this.faceMatcher)
-                if (this.faceMatcher) {
-                    let results = this.faceMatcher.findBestMatch(resizedDetection.descriptor)
-                    let drawoptions = {}
-                    if (results == null) {
-                        drawoptions = {
-                            label: 'Desconocido',
-                            lineWidth: 2,
-                            boxColor: 'red',
-                            drawLabelOptions: { fontStyle: 'Roboto' }
-                        }
-
-                    } else {
-                        drawoptions = {
-                            label: `Conocido`,
-                            lineWidth: 2,
-                            boxColor: 'green',
-                            drawLabelOptions: { fontStyle: 'Roboto' }
-                        }
-                    }
-                    new faceapi.draw.DrawBox(resizedDetection.detection.box, drawoptions).draw(this.stream_video)
-                } else {
-                    throw new Error("faceMatcher not found")
-                }
-
-            })
-        }
-
-        return this.stream_video
 
     }
 
@@ -324,6 +260,32 @@ class MvfyHsv {
         }
     }
 
+
+    /**
+     * Preprocess list of matches of users
+     * @param {Array[user]} matches 
+     * @returns 
+     */
+    async loadMatches() {
+
+        let matches = await getUsers({
+            query: {
+                system_id: this.id
+            }
+        })
+
+
+        temp_matches = []
+        for (let i = 0; i < matches.length; i++) {
+            temp_matches.push({
+                "descriptor": matches[i].detection.descriptor,
+                "label": matches[i].author
+            })
+        }
+
+        return temp_matches
+    }
+
     /**
      * Detect faces and tag them
      * @param {String} route ruta de guardado de las imagenes
@@ -423,19 +385,20 @@ class MvfyHsv {
 
             let matches = getUsers({
                 query: {
-                    system_id: system.id
+                    system_id: system._id
                 }
             })
 
-            matches = (matches != null) ? matches : []
+            process_matches = this.processMatches(matches)
 
             this.io.send(stringify({
                 action: constants.REQUEST.SEND_DETECTION_VALIDATED,
                 data: {
-                    system_id: system.id,
-                    matches: matches
+                    system_id: system._id,
+                    matches: process_matches
                 }
             }))
+
         } catch (error) {
             this.io.send(stringify({
                 action: constants.REQUEST.ERROR,
@@ -444,6 +407,76 @@ class MvfyHsv {
                 }
             }))
         }
+    }
+
+    /**
+     * Principal streamer of video detection of image
+     */
+    async streamer() {
+
+        const wCap = new cv.VideoCapture(0)
+        const interval = Math.round(1000 / this._stream_fps)
+        wCap.set(cv.CAP_PROP_FRAME_WIDTH, this.display_size.width)
+        wCap.set(cv.CAP_PROP_FRAME_HEIGHT, this.display_size.height)
+        console.log("capture")
+
+        this.interval_streaming = setInterval(async() => {
+            const frame = wCap.read();
+            let process_frame = await this.middlewareDetection(frame)
+            const _image = cv.imencode('.jpg', process_frame).toString('base64')
+            this.io.emit(ACTION.SEND_IMAGE_CLIENT, _image)
+        }, interval);
+    }
+
+    async middlewareDetection(img) {
+
+        if (this.stream_video == null) {
+            this.stream_video = faceapi.createCanvas();
+            faceapi.matchDimensions(this.stream_video, this.display_size)
+        }
+
+        let detections = await this.loadDetectionsAndFeatures(img);
+        this.stream_video.getContext('2d').clearRect(0, 0, this.stream_video.width, this.stream_video.height);
+
+        if (detections) {
+            detections.map(detection => {
+                console.log(detection)
+
+                let resizedDetection = faceapi.resizeResults(detection, this.display_size)
+
+                console.log(this.faceMatcher)
+                if (this.faceMatcher) {
+                    let results = this.faceMatcher.findBestMatch(resizedDetection.descriptor)
+                    let drawoptions = {}
+                    let _user = await this.setDetection({
+                        detection: resizedDetection
+                    })
+                    if (results == null) {
+                        drawoptions = {
+                            label: 'Desconocido',
+                            lineWidth: 2,
+                            boxColor: 'red',
+                            drawLabelOptions: { fontStyle: 'Roboto' }
+                        }
+
+                    } else {
+                        drawoptions = {
+                            label: (_user) ? _user.author : `Conocido`,
+                            lineWidth: 2,
+                            boxColor: 'green',
+                            drawLabelOptions: { fontStyle: 'Roboto' }
+                        }
+                    }
+                    new faceapi.draw.DrawBox(resizedDetection.detection.box, drawoptions).draw(this.stream_video)
+                } else {
+                    throw new Error("faceMatcher not found")
+                }
+
+            })
+        }
+
+        return this.stream_video
+
     }
 
     /**
@@ -473,9 +506,9 @@ class MvfyHsv {
      * @param {Object} user 
      */
     async setDetection(user) {
+        let _user = null
         try {
-            let _user = user
-            if (user.id != null && user.detection != null) {
+            if (user.detection != null) {
                 let exist_user = await getUser({
                     query: {
                         system_id: this.id,
@@ -493,20 +526,11 @@ class MvfyHsv {
                     })
                 }
             }
-            this.io.send(stringify({
-                action: constants.REQUEST.SEND_DETECTION_VALIDATED,
-                data: {
-                    user: _user
-                }
-            }))
         } catch (error) {
-            this.io.send(stringify({
-                action: constants.REQUEST.ERROR,
-                data: {
-                    error: `Error validation user - ${user.author} \n: ${error}`
-                }
-            }))
+            console.log(`Error validation user - ${user.author} \n: ${error}`)
         }
+
+        return _user
     }
 
     /**

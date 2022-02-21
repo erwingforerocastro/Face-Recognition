@@ -70,11 +70,22 @@ const replaceValues = (text, keys, values) => {
     return tempText
 }
 
+/**
+ * Generate unique name with previous string if is been given
+ * @param {string} pre_string 
+ * @returns string
+ */
+const generateUniqueName = (pre_string) => {
+    let actual_date = getActualDate("ddmmyyyyhhmmss")
+    return pre_string ? `${pre_string}${actual_date}` : actual_date
+}
+
 export {
     convertString2Int,
     frecuency,
     replaceValues,
     getActualDate,
-    getDateDiffSoFar
+    getDateDiffSoFar,
+    generateUniqueName
 
 }

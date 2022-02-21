@@ -5,7 +5,13 @@ export default function makeUpdateUser({ usersDB, makeUser }) {
             throw new Error('You must supply an id.')
         }
 
-        const user = makeUser({ id: id, ...changes });
+        const existingUser = await usersDB.findById({ id });
+
+        if (!existingUser) {
+            throw new Error("User nof found, require create system");
+        }
+
+        const user = makeUser({...existingUser, ...changes });
 
         return usersDB.update({
             _id: id,
@@ -18,7 +24,6 @@ export default function makeUpdateUser({ usersDB, makeUser }) {
             knowledge: user.getKnowledge(),
             frequency: user.getFrequency(),
             modified_on: user.getModifiedOn(),
-            id: user.getId()
         })
     }
 }

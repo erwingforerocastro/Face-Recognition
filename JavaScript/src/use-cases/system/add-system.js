@@ -13,7 +13,8 @@ export default function makeAddSystem({ systemsDB, makeSystem }) {
             type_system: system.getTypeSystem(),
             hash: system.getHash(),
             created_on: system.getCreatedOn(),
-            modified_on: system.getModifiedOn()
+            modified_on: system.getModifiedOn(),
+            _id: system.getId()
         })
     }
 }
