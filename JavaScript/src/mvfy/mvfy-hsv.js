@@ -22,7 +22,6 @@
 'use strict';
 
 // import '@tensorflow/tfjs-node';
-// implements nodejs wrappers for HTMLCanvasElement, HTMLImageElement, ImageData
 import * as canvas from 'canvas';
 import * as faceapi from 'face-api.js';
 import * as utils from '../utils'
