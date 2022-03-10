@@ -21,17 +21,17 @@
 
 'use strict';
 
-// import '@tensorflow/tfjs-node';
+import '@tensorflow/tfjs-node';
 // implements nodejs wrappers for HTMLCanvasElement, HTMLImageElement, ImageData
-// import * as canvas from 'canvas';
-import * as faceapi from './face-api.js';
+import * as canvas from 'canvas';
+import * as faceapi from 'face-api.js';
 import * as utils from '../utils'
 import fs from 'file-system'
 import stringify from 'fast-json-stable-stringify'
 import { StringDecoder } from 'string_decoder'
 import SocketIO from 'socket.io'
-import streamer from './streamer'
 import path from 'path';
+import * as cv from 'opencv4nodejs'
 //constants
 import * as constants from "../utils/constants"
 
@@ -44,6 +44,9 @@ import {
     updateSystem,
     updateUser
 } from '../use-cases/index'
+
+const { Canvas, Image, ImageData } = canvas
+faceapi.env.monkeyPatch({ Canvas, Image, ImageData })
 
 class MvfyHsv {
 
@@ -113,11 +116,12 @@ class MvfyHsv {
      * Init system in backend process
      * WARNING - this function block the event loop
      */
-    start() {
+    start(options = {}) {
+        let stream = (options["stream"]) ? options.stream : null
 
         // console.log("WARNING - this function block the event loop")
 
-        (async() => {
+            (async() => {
             try {
 
                 console.log("Charging system..")
@@ -142,7 +146,7 @@ class MvfyHsv {
                     await this.loadModels()
 
                     console.log("Creating streamer..")
-                    await this.streaming()
+                    await this.streamer(stream)
                 }
 
                 this.execution = true
@@ -412,9 +416,9 @@ class MvfyHsv {
     /**
      * Principal streamer of video detection of image
      */
-    async streamer() {
+    async streamer(stream) {
 
-        const wCap = new cv.VideoCapture(0)
+        const wCap = (stream != null) ? stream : new cv.VideoCapture(0)
         const interval = Math.round(1000 / this._stream_fps)
         wCap.set(cv.CAP_PROP_FRAME_WIDTH, this.display_size.width)
         wCap.set(cv.CAP_PROP_FRAME_HEIGHT, this.display_size.height)
@@ -428,6 +432,20 @@ class MvfyHsv {
         }, interval);
     }
 
+    /**
+     * 
+     * @param {*} url 
+     * @returns 
+     */
+    async ip_cam_streamer(url) {
+        return cv.VideoCapture(url)
+    }
+
+    /**
+     * Process image and process found users
+     * @param {*} img 
+     * @returns 
+     */
     async middlewareDetection(img) {
 
         if (this.stream_video == null) {
@@ -439,7 +457,7 @@ class MvfyHsv {
         this.stream_video.getContext('2d').clearRect(0, 0, this.stream_video.width, this.stream_video.height);
 
         if (detections) {
-            detections.map(detection => {
+            await detections.map(async detection => {
                 console.log(detection)
 
                 let resizedDetection = faceapi.resizeResults(detection, this.display_size)
@@ -451,7 +469,8 @@ class MvfyHsv {
                     let _user = await this.setDetection({
                         detection: resizedDetection
                     })
-                    if (results == null) {
+
+                    if (results == null || results == []) {
                         drawoptions = {
                             label: 'Desconocido',
                             lineWidth: 2,
@@ -586,4 +605,6 @@ MvfyHsv.const = Object.freeze({
     ...constants
 })
 
-export default MvfyHsv
+export default MvfyHsv.freeze({
+    ...constants
+})

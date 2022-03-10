@@ -46,7 +46,10 @@ const hsv = new MvfyHsv({
 //     type_service: MvfyHsv.const.TYPE_SERVICE.REMOTE,
 // });
 
-hsv.start()
+
+hsv.start({
+    streamer: hsv.ip_cam_streamer('rtsp://mvfysystem:mvfysystem@192.168.1.4:8080/h264_ulaw.sdp')
+})
 
 server.listen(PORT, () => {
     console.log(`Listen Socket in port ${PORT}`);
