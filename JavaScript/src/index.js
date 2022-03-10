@@ -48,7 +48,7 @@ const hsv = new MvfyHsv({
 
 
 hsv.start({
-    streamer: hsv.ip_cam_streamer('rtsp://mvfysystem:mvfysystem@192.168.1.4:8080/h264_ulaw.sdp')
+    streamer: hsv.ip_cam_streamer('rtsp://mvfysystem:mvfysystem@192.168.1.7:8080/h264_ulaw.sdp')
 })
 
 server.listen(PORT, () => {
