@@ -7,7 +7,7 @@ import express from 'express'
 import MvfyHsv from './mvfy/mvfy-hsv';
 import { PORT } from './utils/constants';
 const app = express();
-
+ 
 
 //routes
 app.get('/', async function(req, res) {
@@ -48,7 +48,7 @@ const hsv = new MvfyHsv({
 
 
 hsv.start({
-    streamer: hsv.ip_cam_streamer('rtsp://mvfysystem:mvfysystem@192.168.1.7:8080/h264_ulaw.sdp')
+    streamer: hsv.ip_cam_streamer('rtsp://mvfysystem:mvfysystem@192.168.1.1:8080/h264_ulaw.sdp')
 })
 
 server.listen(PORT, () => {

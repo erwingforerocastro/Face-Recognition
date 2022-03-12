@@ -1,12 +1,45 @@
-import * as cv from 'opencv4nodejs'
+// import * as onvif from 'node-onvif'
+const Stream =  require('node-rtsp-stream')
+const onvif = require('node-onvif')
 
-const ip_cam_streamer = async(url) => {
-    const interval = Math.round(1000 / this._stream_fps)
-    wCap = cv.VideoCapture(url)
-    return setInterval(async() => {
-        const frame = wCap.read();
-        let process_frame = await this.middlewareDetection(frame)
-        const _image = cv.imencode('.jpg', process_frame).toString('base64')
-        this.io.emit(ACTION.SEND_IMAGE_CLIENT, _image)
-    }, interval);
+// /**
+//  * Discover ONVIF network cameras.
+//  * @param {boolean} print 
+//  */
+// const get_ip_cams = (print=false) => {
+//     onvif.startProbe().then((device_info_list)=>{
+//         if(print){
+//             console.log(`${device_info_list.length} devices were found`);
+
+//             device_info_list.forEach((info) => {
+//                 console.log(`- ${info.urn}`);
+//                 console.log(`  - ${info.name}`);
+//                 console.log(`  - ${info.xaddrs[0]}`);
+//             })
+//         }
+        
+//         return device_info_list
+//     }).catch((error) => {
+//         console.error(error);
+//     })
+
+// }
+
+const set_ip_cam = async (options={}) => {
+
+    let device = new onvif.OnvifDevice({
+        xaddr: 'http://192.168.1.1:8080/onvif/device_service',
+        user : 'mvfysystem',
+        pass : 'mvfysystem'
+    })
+    await device.init()
+    let url = device.getUdpStreamUrl()
+    console.log(url);
+    let stream = new Stream({
+        name:'name',
+        streamUrl: url,
+        wsPort: 9000
+    })
 }
+
+set_ip_cam()

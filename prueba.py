@@ -1,6 +1,6 @@
 import cv2
 
-stream = cv2.VideoCapture('rtsp://mvfysystem:mvfysystem@192.168.1.4:8080/h264_ulaw.sdp')
+stream = cv2.VideoCapture('rtsp://mvfysystem:mvfysystem@192.168.1.1:8080/h264_ulaw.sdp')
 
 # Use the next line if your camera has a username and password
 # stream = cv2.VideoCapture('protocol://username:password@IP:port/1')  
