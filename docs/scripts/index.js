@@ -2,15 +2,18 @@ const LOCAL = 1;
 const URL = (LOCAL == 1) ? 'http://127.0.0.1:5500/docs/' : '';
 const htmlContent = $.get(`${URL}pages/introduccion.html`);
 const _ = undefined;
+let structure = null
 
 /**
  * Obtener la estructura del sistema
  * @return json objeto con los valores de la estructura
  */
 const getEstructure = async() => {
-
-    let response = await $.getJSON(`${URL}scripts/estructure.json`);
-    return response;
+    if (structure==null){
+        structure = await $.getJSON(`${URL}scripts/estructure.json`);
+    }
+    
+    return structure;
 }
 
 

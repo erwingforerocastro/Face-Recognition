@@ -7,18 +7,26 @@
 <body>
   <div>
       <canvas id="video-canvas" width="640" height="360"></canvas>
+      <img id="image">
   </div>
   <script src="jsmpeg.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js"></script>
   <script>
-      let canvasVideo = document.getElementById("video-canvas")
-      let ws = new WebSocket("ws://localhost:9999")
-      let player = new jsmpeg(ws, {
-          canvas: canvasVideo,
-          autoplay:true,
-          audio: false,
-          loop:true
-      })
+      
+      const socket = io()
+        socket.on('message', (data) => {
+            const imageEl = document.getElementById("image");
+            imageEl.src = `data:image/jpeg;base64,${data}`;
+        })
+      
+      //   let canvasVideo = document.getElementById("video-canvas")
+      // let ws = io("http://127.0.0.1:8088")
+      // let player = new jsmpeg(ws, {
+      //     canvas: canvasVideo,
+      //     autoplay:true,
+      //     audio: false,
+      //     loop:true
+      // })
   </script>
 </body>
 </html>
