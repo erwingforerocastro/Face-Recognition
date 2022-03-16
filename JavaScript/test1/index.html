@@ -13,10 +13,21 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js"></script>
   <script>
       
-      const socket = io()
-        socket.on('message', (data) => {
-            const imageEl = document.getElementById("image");
-            imageEl.src = `data:image/jpeg;base64,${data}`;
+      const socket = io("http://127.0.0.1:5000/", 
+          { 
+      cors: {    
+        origin: "*",    
+        methods: ["GET", "POST"]  
+      }})
+        socket.on('image-event', (data) => {
+            console.log(data)
+            if (data){
+              const imageEl = document.getElementById("image");
+              imageEl.src = `data:image/jpeg;base64,${data.data}`;
+            }else{
+              console.log("without data")
+            }
+            
         })
       
       //   let canvasVideo = document.getElementById("video-canvas")
